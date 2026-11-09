@@ -1,0 +1,3 @@
+PROBE|launch|mode=uikit lang=en bundleLoc=en forceRTL=false
+PROBE|uikit|dir=ltr semantic=3 barEdge=trailing | bounds=x=0 y=0 w=951 h=669 safe(l=0 r=84 t=0 b=34) | leadingLabel=x=0 y=7 w=70 h=20 | division=[] | occlusion=[]
+PROBE|uikit|dir=ltr semantic=3 barEdge=trailing | bounds=x=0 y=0 w=951 h=669 safe(l=0 r=84 t=0 b=34) | leadingLabel=x=0 y=7 w=70 h=20 | division=[x=455 y=0 w=40 h=669 active=false] | occlusion=[x=677 y=21 w=58 h=37 active=false; x=867 y=0 w=84 h=124 active=true]

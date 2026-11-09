@@ -1,0 +1,9 @@
+PROBE|launch|mode=split lang=ar bundleLoc=ar forceRTL=false
+PROBE|split.detailFrame|x=0 y=0 w=0 h=0
+PROBE|split.sidebarFrame|x=0 y=0 w=0 h=0
+PROBE|split.detail|dir=rightToLeft barEdge=leading h=regular v=regular | global=x=0 y=0 w=0 h=0 | division.mirrors=[] | division.fixed=[] | occlusion.mirrors=[] | occlusion.fixed=[]
+PROBE|split.detail|dir=rightToLeft barEdge=leading h=regular v=regular | global=x=0 y=82 w=547 h=553 | division.mirrors=[] | division.fixed=[] | occlusion.mirrors=[] | occlusion.fixed=[]
+PROBE|split.detailFrame|x=0 y=82 w=547 h=553
+PROBE|split.sidebarFrame|x=547 y=82 w=320 h=553
+PROBE|split.detail|dir=rightToLeft barEdge=leading h=regular v=regular | global=x=0 y=82 w=547 h=553 | division.mirrors=[x=51 y=-82 w=40 h=669 active=false] | division.fixed=[x=455 y=-82 w=40 h=669 active=false] | occlusion.mirrors=[x=-188 y=-61 w=58 h=37 active=false; x=-404 y=-82 w=84 h=124 active=true] | occlusion.fixed=[x=677 y=-61 w=58 h=37 active=false; x=867 y=-82 w=84 h=124 active=true]
+PROBE|split.detail.hinge|status=fullyOpen angle=180

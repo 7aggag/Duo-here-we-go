@@ -1,0 +1,8 @@
+{
+  "name": "duo-here-we-go",
+  "version": "0.1.0",
+  "description": "Ready an iOS app for iPhone Duo: Apple's resizability skill first, then Arabic/RTL, pose captures and one readiness report",
+  "author": { "name": "Haggag" },
+  "license": "MIT",
+  "keywords": ["ios", "iphone-duo", "foldable", "rtl", "arabic", "swiftui", "uikit"]
+}

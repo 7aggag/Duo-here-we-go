@@ -1,0 +1,7 @@
+PROBE|launch|mode=split lang=en bundleLoc=en forceRTL=false
+PROBE|split.detailFrame|x=0 y=0 w=0 h=0
+PROBE|split.sidebarFrame|x=0 y=0 w=0 h=0
+PROBE|split.detail|dir=leftToRight barEdge=trailing h=compact v=regular | global=x=0 y=0 w=0 h=0 | division.mirrors=[] | division.fixed=[] | occlusion.mirrors=[] | occlusion.fixed=[]
+PROBE|split.sidebarFrame|x=0 y=82 w=382 h=562
+PROBE|split.detail|dir=leftToRight barEdge=trailing h=compact v=regular | global=x=0 y=0 w=466 h=678 | division.mirrors=[] | division.fixed=[] | occlusion.mirrors=[] | occlusion.fixed=[]
+PROBE|split.detailFrame|x=0 y=0 w=466 h=678

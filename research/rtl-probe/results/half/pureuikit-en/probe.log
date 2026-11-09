@@ -1,0 +1,8 @@
+PROBE|launch|pureUIKit lang=en bundleLoc=en forceRTL=false
+PROBE|uikit.primary|frame=x=0 y=0 w=320 h=669 dir=ltr
+PROBE|uikit.secondary|dir=ltr semantic=0 barEdge=trailing | frameInWindow=x=0 y=0 w=951 h=669 safe(l=320 r=84) | leading=x=320 y=90 w=70 h=20 trailing=x=793 y=90 w=74 h=20 leftPlusInset=x=0 y=118 w=84 h=20 | division=[]
+PROBE|uikit.primary|frame=x=0 y=0 w=320 h=669 dir=ltr
+PROBE|uikit.secondary|dir=ltr semantic=0 barEdge=trailing | frameInWindow=x=0 y=0 w=951 h=669 safe(l=320 r=84) | leading=x=320 y=90 w=70 h=20 trailing=x=793 y=90 w=74 h=20 leftPlusInset=x=320 y=118 w=84 h=20 | division=[]
+PROBE|uikit.primary|frame=x=0 y=0 w=320 h=669 dir=ltr
+PROBE|uikit.primary|frame=x=0 y=0 w=475 h=669 dir=ltr
+PROBE|uikit.secondary|dir=ltr semantic=0 barEdge=trailing | frameInWindow=x=0 y=0 w=951 h=669 safe(l=495 r=84) | leading=x=495 y=90 w=70 h=20 trailing=x=793 y=90 w=74 h=20 leftPlusInset=x=320 y=118 w=84 h=20 | division=[x=455 y=0 w=40 h=669 active=true]

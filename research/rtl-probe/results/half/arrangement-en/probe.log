@@ -1,0 +1,8 @@
+PROBE|launch|mode=arrangement lang=en bundleLoc=en forceRTL=false
+PROBE|arr.primary|x=0 y=0 w=867 h=635
+PROBE|arr.secondary|x=0 y=0 w=867 h=635
+PROBE|arr.env|dir=leftToRight barEdge=trailing h=regular v=regular | global=x=0 y=475 w=867 h=160 | division.mirrors=[] | division.fixed=[] | occlusion.mirrors=[] | occlusion.fixed=[]
+PROBE|arr.env|dir=leftToRight barEdge=trailing h=regular v=regular | global=x=0 y=475 w=867 h=160 | division.mirrors=[x=455 y=-475 w=40 h=669 active=true] | division.fixed=[x=455 y=-475 w=40 h=669 active=true] | occlusion.mirrors=[x=677 y=-454 w=58 h=37 active=false; x=867 y=-475 w=84 h=124 active=true] | occlusion.fixed=[x=677 y=-454 w=58 h=37 active=false; x=867 y=-475 w=84 h=124 active=true]
+PROBE|arr.primary|x=495 y=0 w=371 h=635
+PROBE|arr.secondary|x=0 y=0 w=455 h=635
+PROBE|arr.env.hinge|status=partiallyOpen angle=90

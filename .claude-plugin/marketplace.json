@@ -1,0 +1,13 @@
+{
+  "name": "duo-here-we-go",
+  "description": "Ready an iOS app for iPhone Duo, with Arabic and right-to-left support",
+  "owner": { "name": "Haggag" },
+  "plugins": [
+    {
+      "name": "duo-here-we-go",
+      "source": "./",
+      "description": "Ready an iOS app for iPhone Duo: Apple's resizability skill first, then Arabic/RTL, pose captures and one readiness report",
+      "version": "0.1.0"
+    }
+  ]
+}
