@@ -99,7 +99,7 @@ Done when `REPORT.md` exists and you have told the user its readiness line, each
 
 ### 9. App Store screenshots (only when asked)
 
-Run this only when the user asks for store screenshots. App Store Connect accepts iPhone Duo screenshots at 1398 × 2034 (outer display) and 2007 × 2853 (inner display), in either orientation, and shows a badge on the product page when they are there. Capture the screens worth showing first, after the fixes and with the app's sample-data hooks, one label per screen (`--label store-home`, `--label store-detail`, ...), then:
+Run this only when the user asks for store screenshots. When they ask for the screenshots only (for example "صوّر صور المتجر للـ Duo بس"), run steps 1 and 2, skip steps 4 to 8, capture as below and stop after this step. App Store Connect accepts iPhone Duo screenshots at 1398 × 2034 (outer display) and 2007 × 2853 (inner display), in either orientation, and shows a badge on the product page when they are there. Capture the screens worth showing first, after the fixes and with the app's sample-data hooks, one label per screen (`--label store-home`, `--label store-detail`, ...), then:
 
 ```bash
 python3 scripts/store_shots.py --captures <project>/dhwg-out --labels store-home,store-detail --poses open,half,closed

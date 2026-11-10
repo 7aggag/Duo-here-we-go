@@ -140,6 +140,8 @@ When the app is ready, ask for its store screenshots:
 
 > Make the iPhone Duo App Store screenshots, in English and Arabic.
 
+Or in Arabic: *صوّر صور المتجر للـ Duo بس بالعربي والإنجليزي*. Asked for screenshots only, the agent skips the review and the fixes: it builds, captures the screens you pick and writes the store folders.
+
 App Store Connect takes iPhone Duo screenshots at 1398 × 2034 (outer display) and 2007 × 2853 (inner display), and [shows a badge](https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications/) on the product page when they are there. The skill captures the screens you pick in every pose and language, keeps the shots at those sizes, removes the alpha channel App Store Connect rejects, and writes up to 10 per language to `dhwg-out/store/<lang>/`. The Arabic ones are captured in Arabic, never mirrored from English, because the bar does not move. Each folder is one set: App Store Connect keeps a single iPhone Duo set per language that takes both sizes together, up to 10. It adds no titles or frames and uploads nothing: you add each folder under iPhone Duo in that language's Media Manager.
 
 ## Requirements
