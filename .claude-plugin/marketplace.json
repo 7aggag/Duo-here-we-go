@@ -1,7 +1,10 @@
 {
   "name": "duo-here-we-go",
   "description": "Ready an iOS app for iPhone Duo, with Arabic and right-to-left support",
-  "owner": { "name": "Haggag" },
+  "owner": {
+    "name": "Haggag",
+    "url": "https://github.com/7aggag"
+  },
   "plugins": [
     {
       "name": "duo-here-we-go",
