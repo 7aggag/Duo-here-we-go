@@ -92,7 +92,11 @@ def svg(p):
     grid = "".join(f'<path d="M{x} 0V{H}" stroke="{p["grid"]}"/>' for x in range(0, W, 40))
     grid += "".join(f'<path d="M0 {y}H{W}" stroke="{p["grid"]}"/>' for y in range(0, H, 40))
     devices_y = 290
-    c_x, o1_x, o2_x = 110, 360, 810
+    # Closed (190 wide) and two half-open (400 wide) devices, 60 apart, centred, bottoms aligned.
+    gap = 60
+    c_x = (W - (190 + 400 + 400 + 2 * gap)) / 2
+    o1_x = c_x + 190 + gap
+    o2_x = o1_x + 400 + gap
     return f"""<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}" role="img" aria-labelledby="t d">
 <title id="t">Duo Here We Go</title>
 <desc id="d">Ready your iOS app for iPhone Duo, in English and Arabic. Three iPhone Duo drawings: closed, half-open in English, and half-open in Arabic where the sidebar moves beside the vertical bar while the bar stays on the right.</desc>
@@ -110,7 +114,7 @@ def svg(p):
 <text x="{W / 2}" y="194" font-size="30" font-weight="700" fill="{p["ink"]}">Ready your iOS app for iPhone Duo, in English <tspan fill="{p["accent2"]}">and</tspan> <tspan font-family="{AR_FONT}" fill="{p["accent2"]}">العربية</tspan>.</text>
 <text x="{W / 2}" y="232" font-size="19" fill="{p["muted"]}">Apple's resizability skill first, then the vertical bar, the hinge and right-to-left.</text>
 </g>
-{closed_duo(c_x, devices_y - 4, p)}
+{closed_duo(c_x, devices_y + 280 - 276, p)}
 {half_open_duo(o1_x, devices_y, p, rtl=False)}
 {half_open_duo(o2_x, devices_y, p, rtl=True)}
 <g font-family="{FONT}" font-size="17" text-anchor="middle" fill="{p["label"]}">
