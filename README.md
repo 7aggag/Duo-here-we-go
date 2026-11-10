@@ -76,6 +76,7 @@ flowchart LR
 | Rule | Severity | Catches |
 |---|---|---|
 | `DHWG-001` | warn | A split-view sidebar capped at or below 475 pt, so half-open the detail runs across the fold |
+| `DHWG-002` | warn | User-facing text that names Face ID; iPhone Duo has Touch ID only |
 | `DHWG-RTL-001` | error | In-app RTL through the appearance proxy without `traitOverrides.layoutDirection` |
 | `DHWG-RTL-002` | warn | UIKit (physical) and SwiftUI (mirrored) reserved-region frames mixed in one project |
 | `DHWG-RTL-003` | warn | The vertical bar edge mapped to `left`/`right` instead of leading/trailing |
@@ -123,7 +124,7 @@ Or in Arabic: *جهّز التطبيق ده عشان يشتغل كويس على 
 
 ## Requirements
 
-- macOS with Xcode 27.1 or later. The skill creates the iPhone Duo simulator, and downloads its runtime (~8 GB) only after asking you.
+- macOS with Xcode 27.1 or later. The skill creates the iPhone Duo simulator, and downloads its runtime (~8 GB) only after asking you. From Xcode 27.2 the Duo has its own runtime, separate from the other iPhones'; the skill picks the right one.
 - Python 3.9 or later (the one that ships with Xcode's command line tools works).
 - An agent that can run terminal commands. The visual review needs a model that reads images.
 - A git repository, so every change is reviewable.

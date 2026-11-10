@@ -4,9 +4,66 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "skills" / "duo-here-we-go" / "scripts"))
 
-from capture import is_settled, moving_warnings  # noqa: E402
+import struct  # noqa: E402
+import zlib  # noqa: E402
+
+from capture import is_black_frame, is_settled, moving_warnings  # noqa: E402
 
 LAUNCH, UI = b"blank launch screen", b"home screen"
+PROBE = Path(__file__).resolve().parent.parent / "research" / "rtl-probe" / "results"
+
+
+def png(pixel: bytes, width: int = 4, height: int = 3, filt: int = 0) -> bytes:
+    """A flat 8-bit RGB or RGBA PNG, every row stored with one filter type (0 None, 1 Sub, 2 Up)."""
+    n = len(pixel)
+    rows = []
+    for y in range(height):
+        raw = pixel * width
+        if filt == 1:
+            raw = pixel + bytes(n * (width - 1))
+        elif filt == 2 and y > 0:
+            raw = bytes(n * width)
+        rows.append(bytes([filt]) + raw)
+    return encode(b"".join(rows), width, height, n)
+
+
+def encode(rows: bytes, width: int, height: int, channels: int) -> bytes:
+    def chunk(kind, body):
+        return struct.pack(">I", len(body)) + kind + body + struct.pack(">I", zlib.crc32(kind + body))
+
+    ihdr = struct.pack(">IIBBBBB", width, height, 8, 6 if channels == 4 else 2, 0, 0, 0)
+    return (b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", ihdr) + chunk(b"IDAT", zlib.compress(rows))
+            + chunk(b"IEND", b""))
+
+
+class BlackFrames(unittest.TestCase):
+    def test_flat_black_is_black_with_any_filter(self):
+        for filt in (0, 1, 2):
+            self.assertTrue(is_black_frame(png(b"\x00\x00\x00\xff", filt=filt)), filt)
+            self.assertTrue(is_black_frame(png(b"\x00\x00\x00", filt=filt)), filt)
+
+    def test_flat_white_and_grey_are_not_black(self):
+        for filt in (0, 1, 2):
+            self.assertFalse(is_black_frame(png(b"\xff\xff\xff\xff", filt=filt)), filt)
+            self.assertFalse(is_black_frame(png(b"\x80\x80\x80", filt=filt)), filt)
+
+    def test_one_lit_pixel_is_not_black(self):
+        rows = bytes([0]) + bytes(12) + bytes([0]) + bytes([0, 0, 0, 0, 40, 0]) + bytes(6) + bytes([0]) + bytes(12)
+        self.assertFalse(is_black_frame(encode(rows, 4, 3, 3)))
+
+    def test_not_a_png(self):
+        self.assertFalse(is_black_frame(b"home screen"))
+
+    def test_black_frames_never_settle(self):
+        black = png(b"\x00\x00\x00\xff")
+        self.assertFalse(is_settled(black, black, LAUNCH))
+
+    @unittest.skipUnless(PROBE.is_dir(), "probe captures not present")
+    def test_real_simulator_captures(self):
+        # The outer display is off while the Duo is open, so its capture is black.
+        self.assertTrue(is_black_frame((PROBE / "open" / "split-en" / "display-1.png").read_bytes()))
+        self.assertFalse(is_black_frame((PROBE / "open" / "split-en" / "display-3.png").read_bytes()))
+        self.assertFalse(is_black_frame((PROBE / "half" / "split-ar" / "display-3.png").read_bytes()))
 
 
 class Settling(unittest.TestCase):

@@ -39,6 +39,15 @@ class Runtimes(unittest.TestCase):
         self.assertEqual([r["identifier"] for r in duo_runtimes([IOS_27_0, IOS_27_1, IOS_27_2, broken])],
                          ["iOS-27-2", "iOS-27-1"])
 
+    def test_xcode_27_2_uses_the_duo_runtime_not_the_general_one(self):
+        # Xcode 27.2 ships two iOS 27.2 runtimes; only the Duo build lists the Duo device type.
+        general = {"identifier": "com.apple.CoreSimulator.SimRuntime.iOS-27-2", "version": "27.2", "isAvailable": True,
+                   "supportedDeviceTypes": [{"identifier": "com.apple.CoreSimulator.SimDeviceType.iPhone-17"}]}
+        duo = {"identifier": "com.apple.CoreSimulator.SimRuntime.iOS-27-2-iPhone19-4", "version": "27.2",
+               "isAvailable": True, "supportedDeviceTypes": [{"identifier": DUO}]}
+        self.assertEqual([r["identifier"] for r in duo_runtimes([general, duo])], [duo["identifier"]])
+        self.assertEqual(plan(False, DEVICE_TYPES, [general], PLENTY, False), "ask_to_download")
+
 
 if __name__ == "__main__":
     unittest.main()

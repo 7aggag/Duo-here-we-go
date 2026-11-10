@@ -8,6 +8,10 @@ exit 2  this Xcode has no iPhone Duo device type (needs Xcode 27.1 or later)
 exit 5  no installed iOS runtime supports iPhone Duo; ask the user, then rerun with --download
 exit 6  not enough free disk space for the download
 exit 7  the download finished but still no runtime supports iPhone Duo
+
+From Xcode 27.2 the Duo has its own iOS runtime (build 24B91016s, identifier ending in -iPhone19-4),
+separate from the iOS 27.2 runtime the other iPhones use; the general one lists the Duo as unsupported.
+Only runtimes that list the Duo device type are used, so the general runtime is never picked.
 """
 import argparse
 import json
@@ -20,6 +24,7 @@ from typing import List, Optional
 from dhwg_common import DUO_DEVICE_TYPE, find_duo, log, run
 
 # The iOS 27.1 runtime is a 7.9 GB download that unpacks to 7.3 GB; leave room for both plus slack.
+# On Xcode 27.2 the Duo runtime is a second runtime of about the same size.
 DOWNLOAD_GB = 8
 REQUIRED_FREE_GB = 16
 
@@ -84,7 +89,9 @@ def main() -> int:
         log(f"Downloading the iOS runtime (~{DOWNLOAD_GB} GB). This takes a while.")
         result = subprocess.run(["xcodebuild", "-downloadPlatform", "iOS"], stdout=sys.stderr, stderr=sys.stderr)
         if result.returncode != 0 or not duo_runtimes(simctl_json("runtimes")):
-            log("The download did not produce a runtime that supports iPhone Duo.")
+            log("The download did not produce a runtime that supports iPhone Duo. On Xcode 27.2 or later the Duo has "
+                "its own runtime: ask the user to open Xcode > Settings > Components and download (or Update) iOS "
+                "there, then check `xcrun simctl list runtimes` shows a second iOS 27.2 build for the Duo.")
             return 7
 
     runtime = duo_runtimes(simctl_json("runtimes"))[0]

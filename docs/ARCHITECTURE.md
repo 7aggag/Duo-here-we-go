@@ -24,14 +24,14 @@ duo-here-we-go/
   SKILL.md                    # المدخل: المراحل، القواعد، إمتى نسأل المستخدم
   references/
     apple-bridge.md           # تصدير skill آبل وتشغيله وتحويل نتايجه
-    duo-apis.md               # ملخص APIs متراجع على SDK 27.1
+    duo-apis.md               # ملخص APIs متراجع على SDK 27.1، وملاحظات Catalyst والـ runtime بتاع 27.2
     rtl.md                    # نتايج تجربة RTL + قايمة الفحص
     decisions.md              # (لاحقاً، مع المرحلة 5) إزاي نسجّل قرارات إعادة التصميم
   scripts/
     dhwg_common.py            # simctl، والبحث عن محاكي Duo، وتشغيل hinge
     preflight.py              # Xcode 27.1+، محاكي Duo، git، نوع المشروع، العربي
     export_apple_skills.sh
-    capture.py                # يحرّك المفصلة ويصوّر كل وضعية × {en، ar}
+    capture.py                # يحرّك المفصلة ويصوّر كل وضعية × {en، ar}، ويستنى لحد ما الصور السودا تختفي
     dhwg_lint.py              # القواعد → findings-lint.json
     report.py                 # findings + اللقطات → REPORT.md
   vendor/hinge/               # أداة hinge (رخصة MIT، commit 06cb720)

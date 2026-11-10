@@ -252,5 +252,39 @@ class Scope(unittest.TestCase):
         self.assertEqual(subprocess.run([sys.executable, script, str(clean)], capture_output=True).returncode, 0)
 
 
+class FaceIDCopy(unittest.TestCase):
+    SWIFT = """
+        import UIKit
+        let title = "Unlock with Face ID"
+        // "Face ID" in a comment is fine
+    """
+
+    def test_hard_coded_face_id_copy_warns(self):
+        r = lint(project({"App/Login.swift": self.SWIFT}))
+        self.assertEqual(ids(r), ["DHWG-002"])
+        self.assertEqual(r["findings"][0]["severity"], "warn")
+        self.assertEqual(r["findings"][0]["line"], 3)
+
+    def test_copy_chosen_from_biometry_type_is_info(self):
+        body = self.SWIFT + "\nlet kind = LAContext().biometryType\n"
+        r = lint(project({"App/Login.swift": body}))
+        self.assertEqual([f["severity"] for f in r["findings"]], ["info"])
+
+    def test_arabic_strings_file_is_checked_but_info_plist_strings_are_not(self):
+        r = lint(project({
+            "App/ar.lproj/Localizable.strings": '"unlock" = "افتح ببصمة الوجه";\n',
+            "App/ar.lproj/InfoPlist.strings": '"NSFaceIDUsageDescription" = "نستخدم Face ID";\n',
+            "App/en.lproj/Main.strings": '"NSFaceIDUsageDescription" = "We use Face ID";\n',
+        }))
+        self.assertEqual([(f["id"], f["file"]) for f in r["findings"]],
+                         [("DHWG-002", "App/ar.lproj/Localizable.strings")])
+
+    def test_suppressed_with_reason(self):
+        body = 'let t = "Face ID" // dhwg:disable DHWG-002 -- only shown on .faceID\n'
+        r = lint(project({"App/Login.swift": body}))
+        self.assertEqual(ids(r), [])
+        self.assertEqual(len(r["suppressed"]), 1)
+
+
 if __name__ == "__main__":
     unittest.main()

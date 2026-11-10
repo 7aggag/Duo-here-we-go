@@ -27,3 +27,8 @@ grep -rn "<symbol>" "$SDK"/System/Library/Frameworks/{SwiftUICore,SwiftUI,UIKit}
 | `UITraitCollection.systemTraitsAffectingVerticalBarEdge` | pass to `registerForTraitChanges`; includes the layout-direction trait |
 | `UIView.reservedRegions(kind:options:)` | `→ [UIView.ReservedRegion]`, view coordinates, no direction option |
 | `UIHingeInteraction`, `UIArrangementViewController` | present in the headers; not yet exercised by this skill |
+
+## Build settings
+
+- **Mac Catalyst:** in Xcode 27.2 code that uses iOS 27.1-only APIs fails to compile for Mac Catalyst, even inside `#available(iOS 27.1, *)` (a known issue in the 27.2 release notes, still open in the RC). If the project has a Catalyst target, wrap the Duo code in `#if !targetEnvironment(macCatalyst)` as well.
+- **Simulator runtime:** from Xcode 27.2 the Duo has its own iOS runtime, separate from the one other iPhones use. `scripts/setup_duo.py` picks it; if it is missing, download iOS again from Xcode > Settings > Components.

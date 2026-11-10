@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Static checks for iPhone Duo layout and RTL problems, measured on the iOS 27.1 simulator.
+"""Static checks for iPhone Duo layout, RTL and device-copy problems, measured on the iOS 27.1 simulator.
 
 usage: dhwg_lint.py <project-dir> [--out findings-lint.json] [--fail-on error|warn|never]
 
@@ -31,6 +31,10 @@ FIXED_FRAME_WIDTH = re.compile(r"\.frame\s*\(\s*width\s*:\s*\d")
 COLUMN_WIDTH = re.compile(r"navigationSplitViewColumnWidth\s*\(([^)]*)\)")
 # Measured: at 90° a left-to-right sidebar snaps to the hinge only when its max width exceeds the hinge centre.
 HINGE_CENTER_PT = 475
+# iPhone Duo has Touch ID in the side button and no Face ID, so hard-coded Face ID copy is wrong there.
+FACE_ID_COPY = re.compile(r'"[^"\n]*(?:\bFace\s?ID\b|بصمة الوجه|التعرف على الوجه)[^"\n]*"', re.I)
+BIOMETRY_TYPE = re.compile(r"\bbiometryType\b")
+COPY_KEY = re.compile(r'^\s*"(NSFaceIDUsageDescription)"')
 SUPPRESS = re.compile(r"//\s*dhwg:disable(-next-line)?\s+([\w\-, ]+?)\s+--\s+(.+)$")
 
 
@@ -73,8 +77,29 @@ def finding(rule, severity, f: SourceFile, i: int, message: str, fix: str) -> di
             "message": message, "fix": fix, "verified": "static", "evidence": f.lines[i].strip()}
 
 
+def face_id_findings(files: List[SourceFile], strings: List[SourceFile]) -> List[dict]:
+    adapts = any(BIOMETRY_TYPE.search(f.text) for f in files)
+    out = []
+    for f in files + strings:
+        if f.path.name.startswith("InfoPlist."):
+            continue  # NSFaceIDUsageDescription is only shown on Face ID devices
+        for i in range(len(f.lines)):
+            line = f.code(i) if f.path.suffix == ".swift" else f.lines[i]
+            if not FACE_ID_COPY.search(line) or COPY_KEY.search(line):
+                continue
+            out.append(dict(finding(
+                "DHWG-002", "info" if adapts else "warn", f, i,
+                "User-facing text names Face ID. iPhone Duo has Touch ID in the side button and no Face ID"
+                + (", and this copy is not chosen from LAContext.biometryType." if not adapts else
+                   "; the project reads biometryType, so check this copy is only shown for .faceID."),
+                "Pick the wording from LAContext().biometryType (.touchID, .faceID, .opticID) or use a neutral "
+                "phrase such as \"Unlock with biometrics\"."), source="dhwg"))
+    return out
+
+
 def lint(root: Path) -> Dict[str, List[dict]]:
     files = [SourceFile(p, root) for p in project_files(root, (".swift",))]
+    strings = [SourceFile(p, root) for p in project_files(root, (".strings", ".xcstrings"))]
     has_trait_fix = any(TRAIT_FIX.search(f.text) for f in files)
     uses_swiftui = any(f.imports_swiftui or SWIFTUI_APP.search(f.text) for f in files)
     uikit_regions = any("uikit" in f.region_calls(i) for f in files for i in range(len(f.lines)))
@@ -138,9 +163,11 @@ def lint(root: Path) -> Dict[str, List[dict]]:
                     "and the sidebar or arrangement primary swaps halves in RTL.",
                     "Use min/ideal/max widths and check the Arabic half-open capture."))
 
+    out += face_id_findings(files, strings)
+
     kept, suppressed = [], []
     for item in out:
-        f = next(s for s in files if s.rel == item["file"])
+        f = next(s for s in files + strings if s.rel == item["file"])
         reason = f.suppression(item["line"] - 1, item["id"])
         if reason:
             suppressed.append({**item, "suppressed": reason})
