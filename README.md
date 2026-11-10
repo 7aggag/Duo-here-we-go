@@ -8,9 +8,9 @@
 
 # Duo Here We Go
 
-**Ready your SwiftUI or UIKit app for iPhone Duo, in English and Arabic, with one before/after report.**
+**Ready your SwiftUI or UIKit app for iPhone Duo, in English and Arabic.**
 
-<p dir="rtl"><b>جهّز تطبيقك لـ iPhone Duo بالعربي والإنجليزي، وخد تقرير واحد قبل وبعد.</b></p>
+<p dir="rtl"><b>جهّز تطبيقك لـ iPhone Duo بالعربي والإنجليزي.</b></p>
 
 [![MIT license](https://img.shields.io/badge/license-MIT-2fbf71?style=flat-square)](LICENSE)
 [![Xcode 27.1](https://img.shields.io/badge/built_for-Xcode_27.1_·_iOS_27.1-1f9d5a?style=flat-square)](#requirements)

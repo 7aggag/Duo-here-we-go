@@ -108,7 +108,7 @@ def svg(p):
 <text x="{W / 2 + 8}" y="56" font-size="16" fill="{p["muted"]}">Agent skill · SwiftUI &amp; UIKit · iPhone Duo</text>
 <text x="{W / 2}" y="140" font-size="76" font-weight="800" letter-spacing="-1.5" fill="url(#title)">Duo Here We Go</text>
 <text x="{W / 2}" y="194" font-size="30" font-weight="700" fill="{p["ink"]}">Ready your iOS app for iPhone Duo, in English <tspan fill="{p["accent2"]}">and</tspan> <tspan font-family="{AR_FONT}" fill="{p["accent2"]}">العربية</tspan>.</text>
-<text x="{W / 2}" y="232" font-size="19" fill="{p["muted"]}">Apple's resizability skill first, then the vertical bar, the hinge and right-to-left, with one before/after report.</text>
+<text x="{W / 2}" y="232" font-size="19" fill="{p["muted"]}">Apple's resizability skill first, then the vertical bar, the hinge and right-to-left.</text>
 </g>
 {closed_duo(c_x, devices_y - 4, p)}
 {half_open_duo(o1_x, devices_y, p, rtl=False)}
