@@ -71,6 +71,20 @@ class Report(unittest.TestCase):
         self.assertIn("Preflight problem the run continued with: Working tree has uncommitted changes.", text)
         self.assertIn("- No Arabic localization found.", text)
 
+    def test_regular_iphone_row_and_extra_screen_sets(self):
+        base = manifest("baseline", ["closed", "open", "half", "iphone"])
+        write(self.out / "baseline" / "manifest.json", base)
+        extra = manifest("after-reports", ["open", "half"])
+        extra["warnings"] = ["half/ar: moving"]
+        write(self.out / "after-reports" / "manifest.json", extra)
+        text = self.render("--captures", str(self.out))
+        self.assertIn("| Regular iPhone (comparison) |", text)
+        self.assertIn('src="baseline/iphone/ar.png"', text)
+        self.assertIn("### More screens: after-reports", text)
+        self.assertIn('src="after-reports/half/en.png"', text)
+        self.assertIn("- after-reports: half/ar: moving", text)
+        self.assertNotIn("Poses not captured", text)
+
     def test_unverified_finding_without_a_file_shows_its_message(self):
         f = write(self.dir / "v.json", [{"id": "DHWG-COVERAGE", "source": "dhwg", "severity": "info",
                                          "message": "Screens behind login were not captured.", "fix": "-",

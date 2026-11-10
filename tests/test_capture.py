@@ -21,6 +21,22 @@ class Settling(unittest.TestCase):
         self.assertFalse(is_settled(None, UI, LAUNCH))
 
 
+class RegularIphone(unittest.TestCase):
+    def test_booted_non_duo_iphone_is_preferred(self):
+        from dhwg_common import pick_regular_iphone
+        t = "com.apple.CoreSimulator.SimDeviceType."
+        devices = [
+            {"udid": "duo", "deviceTypeIdentifier": t + "iPhone-Duo", "state": "Booted"},
+            {"udid": "ipad", "deviceTypeIdentifier": t + "iPad-Pro-11-inch-M5-12GB", "state": "Booted"},
+            {"udid": "17-off", "deviceTypeIdentifier": t + "iPhone-17", "state": "Shutdown"},
+            {"udid": "18-on", "deviceTypeIdentifier": t + "iPhone-18-Pro-Max", "state": "Booted"},
+            {"udid": "gone", "deviceTypeIdentifier": t + "iPhone-17", "state": "Booted", "isAvailable": False},
+        ]
+        self.assertEqual(pick_regular_iphone(devices)["udid"], "18-on")
+        self.assertEqual(pick_regular_iphone(devices[:3])["udid"], "17-off")
+        self.assertIsNone(pick_regular_iphone(devices[:2]))
+
+
 class MovingWarnings(unittest.TestCase):
     def test_all_shots_moving_collapse_to_one_warning(self):
         w = moving_warnings(["closed/en", "closed/ar", "open/en"], 3, 3)

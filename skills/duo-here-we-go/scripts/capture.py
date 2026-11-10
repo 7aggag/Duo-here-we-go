@@ -3,7 +3,9 @@
 
 usage: capture.py --app Build/MyApp.app [--label baseline|after] [--out dhwg-out]
                   [--poses closed,open,half] [--langs en,ar] [--udid UDID] [--wait 2]
-                  [--settle-timeout 15] [--no-hinge] [-- app launch arguments ...]
+                  [--settle-timeout 15] [--no-hinge] [--iphone] [-- app launch arguments ...]
+--iphone also captures each language on a regular iPhone simulator (pose "iphone"), to tell
+Duo problems from problems the app has everywhere.
 exit 0 = done, 2 = setup error, 3 = hinge control failed (ask the user to set the pose by hand,
 then rerun with --no-hinge --poses <that pose>).
 """
@@ -15,7 +17,8 @@ import time
 from pathlib import Path
 from typing import Optional
 
-from dhwg_common import LANG_ARGS, POSE_ANGLES, ensure_booted, find_duo, hinge, log, run, write_json
+from dhwg_common import (LANG_ARGS, POSE_ANGLES, ensure_booted, find_duo, hinge, log, pick_regular_iphone, run,
+                         simctl_devices, write_json)
 
 
 def bundle_info(app: Path) -> dict:
@@ -47,7 +50,16 @@ def is_settled(previous: Optional[bytes], current: bytes, launch_frame: bytes) -
     return current == previous and current != launch_frame
 
 
-def stable_shot(udid: str, path: Path, min_wait: float, timeout: float):
+def duo_screenshot(udid: str, path: Path) -> dict:
+    return json.loads(hinge(udid, "screenshot", str(path), "--json").stdout)
+
+
+def plain_screenshot(udid: str, path: Path) -> dict:
+    run(["xcrun", "simctl", "io", udid, "screenshot", str(path)])
+    return {"display": "main"}
+
+
+def stable_shot(udid: str, path: Path, min_wait: float, timeout: float, shoot=duo_screenshot):
     """Screenshot until the app has drawn and stopped moving, so neither the blank launch
     screen nor a launch animation is captured. Returns (shot, settled, still_launch_frame)."""
     launch_frame = None
@@ -55,7 +67,7 @@ def stable_shot(udid: str, path: Path, min_wait: float, timeout: float):
     previous = None
     first = True
     while True:
-        shot = json.loads(hinge(udid, "screenshot", str(path), "--json").stdout)
+        shot = shoot(udid, path)
         frame = path.read_bytes()
         if first:
             launch_frame, first = frame, False
@@ -89,6 +101,7 @@ def main() -> int:
     ap.add_argument("--wait", type=float, default=2.0, help="seconds before the first screenshot")
     ap.add_argument("--settle-timeout", type=float, default=15.0, help="max seconds to wait for a still screen")
     ap.add_argument("--no-hinge", action="store_true")
+    ap.add_argument("--iphone", action="store_true", help="also capture each language on a regular iPhone simulator")
     argv = sys.argv[1:]
     launch_args = argv[argv.index("--") + 1:] if "--" in argv else []
     args = ap.parse_args(argv[:argv.index("--")] if "--" in argv else argv)
@@ -117,6 +130,29 @@ def main() -> int:
         manifest["warnings"].append("App bundle has no Arabic localization; 'ar' shots render left-to-right.")
 
     moving = []
+
+    def capture_langs(device: str, pose: str, angle, shoot) -> None:
+        for lang in langs:
+            run(["xcrun", "simctl", "terminate", device, info["bundle_id"]], check=False)
+            launch = ["xcrun", "simctl", "launch", device, info["bundle_id"], *LANG_ARGS[lang], *launch_args]
+            try:
+                run(launch)
+            except RuntimeError:
+                # Right after a boot or an install SpringBoard can refuse the first launch.
+                time.sleep(3.0)
+                run(launch)
+            path = out / pose / f"{lang}.png"
+            path.parent.mkdir(parents=True, exist_ok=True)
+            shot, stable, launch_only = stable_shot(device, path, args.wait, args.settle_timeout, shoot)
+            if launch_only:
+                manifest["warnings"].append(f"{pose}/{lang}: the screen never changed from the first frame after launch; "
+                                            "the shot may be the blank launch screen.")
+            elif not stable:
+                moving.append(f"{pose}/{lang}")
+            manifest["shots"].append({"pose": pose, "angle": angle, "lang": lang, "stable": stable,
+                                      "display": shot["display"], "path": str(path.relative_to(out.parent))})
+            log(f"{args.label}/{pose}/{lang} -> {shot['display']}")
+
     for pose in poses:
         if not args.no_hinge:
             try:
@@ -133,20 +169,17 @@ def main() -> int:
                 log(f"hinge control failed; ask the user to set pose '{pose}' in Device Hub, "
                     f"then rerun with --no-hinge --poses {pose}")
                 return 3
-        for lang in langs:
-            run(["xcrun", "simctl", "terminate", udid, info["bundle_id"]], check=False)
-            run(["xcrun", "simctl", "launch", udid, info["bundle_id"], *LANG_ARGS[lang], *launch_args])
-            path = out / pose / f"{lang}.png"
-            path.parent.mkdir(parents=True, exist_ok=True)
-            shot, stable, launch_only = stable_shot(udid, path, args.wait, args.settle_timeout)
-            if launch_only:
-                manifest["warnings"].append(f"{pose}/{lang}: the screen never changed from the first frame after launch; "
-                                            "the shot may be the blank launch screen.")
-            elif not stable:
-                moving.append(f"{pose}/{lang}")
-            manifest["shots"].append({"pose": pose, "angle": POSE_ANGLES[pose], "lang": lang, "stable": stable,
-                                      "display": shot["display"], "path": str(path.relative_to(out.parent))})
-            log(f"{args.label}/{pose}/{lang} -> {shot['display']}")
+        capture_langs(udid, pose, POSE_ANGLES[pose], duo_screenshot)
+
+    if args.iphone:
+        phone = pick_regular_iphone(simctl_devices())
+        if phone is None:
+            manifest["warnings"].append("No regular iPhone simulator for the comparison shots.")
+        else:
+            ensure_booted(phone["udid"])
+            run(["xcrun", "simctl", "install", phone["udid"], str(app)])
+            manifest["iphone"] = {"udid": phone["udid"], "name": phone["name"]}
+            capture_langs(phone["udid"], "iphone", None, plain_screenshot)
 
     manifest["warnings"] += moving_warnings(moving, len(manifest["shots"]), args.settle_timeout)
     write_json(out / "manifest.json", manifest)

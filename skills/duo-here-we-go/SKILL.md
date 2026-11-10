@@ -11,7 +11,7 @@ Scripts are in `scripts/` (Python 3.9+, standard library). Run them with `python
 
 - **Apple first.** Apple's `app-resizability` skill does the resizability migration. This skill covers what it leaves: the vertical bar, the hinge, Arabic and RTL, captures and the report. When the two disagree, follow Apple and record the difference in the report.
 - **Evidence.** Every claim that something works points at a capture or a finding, and every finding carries `verified`: `static`, `simulator`, `device` or `unverified`. A pose you did not capture is reported as not captured.
-- **Consent before edits.** Code changes happen only on a clean git tree, after the user agrees to the phase that makes them.
+- **Consent before edits.** Code changes happen only on a clean git tree, after the user says yes to that specific change at a checkpoint (step 4 for Apple's edits, step 6 for the rest). A request such as "get the app ready for iPhone Duo" starts the review; it is not a yes to edits. Leave every change in the working tree for the user to review and commit.
 - **Real APIs only.** Before writing any iPhone Duo API, confirm it in the installed SDK (see `references/duo-apis.md`) and wrap new calls in `#available(iOS 27.1, *)`.
 
 ## Steps
@@ -42,8 +42,10 @@ Done when the `.app` exists under `dhwg-out/DerivedData/Build/Products/` and `xc
 First find the app's own test hooks: grep the sources for `ProcessInfo.processInfo.arguments` and the `UserDefaults` keys behind onboarding, so the captures land on real screens with data instead of a first-run welcome. A UI-testing flag that seeds sample data is the best case; a defaults key such as `-settings.onboardingDone YES` also works. Pass them after `--`.
 
 ```bash
-python3 scripts/capture.py --app <path/App.app> --out <project>/dhwg-out --label baseline [-- <app launch args>]
+python3 scripts/capture.py --app <path/App.app> --out <project>/dhwg-out --label baseline --iphone [-- <app launch args>]
 ```
+
+`--iphone` adds English and Arabic shots from a regular iPhone simulator, for the comparison in step 5. To cover more screens, run it again per screen with the app's own hooks and a label such as `--label screen-reports`; the report shows every label.
 
 Look at the first shot before trusting the rest:
 
@@ -67,21 +69,25 @@ For each finding, read its rule (`DHWG-RTL-*` in `references/rtl.md`, `DHWG-0xx`
 
 Two checks keep the findings honest:
 
-- **Regular iPhone first.** Before recording a visual problem, install the same build on a regular iPhone simulator and look for it there. A problem that shows on both is the app's, not the Duo's: mention it to the user, keep it out of the findings.
+- **Regular iPhone first.** Before recording a visual problem, look for it in the `iphone` shots. A problem that shows on both is the app's, not the Duo's: mention it to the user, keep it out of the findings.
 - **Coverage.** List the screens the captures never reached (behind login, payment, deep flows) in one `DHWG-COVERAGE` finding with `verified: "unverified"`, so the report says what was not looked at.
 
-Propose fixes; apply them only when the user asks. Done when every lint finding has a verdict, every shot has been reviewed, and the coverage finding is written or every screen was reached.
+Done when every lint finding has a verdict, every shot has been reviewed, and the coverage finding is written or every screen was reached.
 
-### 6. After captures
+### 6. Checkpoint
 
-If steps 4 or 5 changed code, rebuild (step 2) and capture again with `--label after`. Done when `dhwg-out/after/manifest.json` exists, or nothing changed.
+Write the report (step 8) as it stands, then stop and show the user each finding with the fix you propose: file, the change, and what it does on a regular iPhone. Wait for their answer. Done when the user has said yes, no or later to each proposed fix.
 
-### 7. Report
+### 7. Fix and capture again
+
+Apply only the fixes the user accepted. Then rebuild (step 2), capture again with `--label after` (same hooks and labels as before), and rerun the lint. For each finding the after shots show fixed, set `severity: "info"`, start its `message` with `Fixed:`, keep what the problem was, and point `evidence` at the after shot. Done when `dhwg-out/after/manifest.json` exists and every accepted fix is either shown fixed or reported as still open.
+
+### 8. Report
 
 ```bash
-python3 scripts/report.py --out <project>/dhwg-out/REPORT.md --captures <project>/dhwg-out \
+python3 scripts/report.py --out <project>/dhwg-out/REPORT.md --captures <project>/dhwg-out --title "<App name>" \
   --preflight <project>/dhwg-out/preflight.json \
   --findings <project>/dhwg-out/findings-apple.json <project>/dhwg-out/findings-lint.json <project>/dhwg-out/findings-visual.json
 ```
 
-Done when `REPORT.md` exists and you have told the user its readiness line, each error, and every item under "Not verified".
+Done when `REPORT.md` exists and you have told the user its readiness line, each error, every item under "Not verified", and which files changed (uncommitted).

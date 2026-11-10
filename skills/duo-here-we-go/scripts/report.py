@@ -16,7 +16,10 @@ from typing import List, Optional
 
 SEVERITIES = ["error", "warn", "info"]
 POSES = ["closed", "open", "half"]
-POSE_NAMES = {"closed": "Closed (outer display)", "open": "Open 180°", "half": "Half-open 90°"}
+ROWS = POSES + ["iphone"]
+POSE_NAMES = {"closed": "Closed (outer display)", "open": "Open 180°", "half": "Half-open 90°",
+              "iphone": "Regular iPhone (comparison)"}
+MAIN_LABELS = ("baseline", "after")
 
 
 def load_findings(paths: List[str]):
@@ -37,6 +40,24 @@ def load_manifest(captures: Optional[Path], label: str) -> Optional[dict]:
         return None
     path = captures / label / "manifest.json"
     return json.loads(path.read_text(encoding="utf-8")) if path.exists() else None
+
+
+def extra_manifests(captures: Optional[Path]) -> List[dict]:
+    """Capture sets other than baseline/after, e.g. one per extra screen."""
+    if not captures or not captures.is_dir():
+        return []
+    paths = sorted(p for p in captures.glob("*/manifest.json") if p.parent.name not in MAIN_LABELS)
+    return [json.loads(p.read_text(encoding="utf-8")) for p in paths]
+
+
+def screen_rows(columns, captures: Path, out_dir: Path) -> List[str]:
+    header = [f"{name} · {lang}" for name, _ in columns for lang in ("en", "ar")]
+    rows = ["| Pose | " + " | ".join(header) + " |", "|---|" + "---|" * len(header)]
+    for pose in ROWS:
+        cells = [shot_cell(m, pose, lang, captures, out_dir) for _, m in columns for lang in ("en", "ar")]
+        if any(c != "—" for c in cells):
+            rows.append(f"| {POSE_NAMES[pose]} | " + " | ".join(cells) + " |")
+    return rows + [""]
 
 
 def readiness(findings: List[dict]) -> str:
@@ -103,27 +124,24 @@ def build(args) -> str:
         lines += [f"- {s['id']} at `{s['file']}:{s['line']}` — {s['suppressed']}" for s in suppressed]
         lines.append("")
 
+    extras = extra_manifests(captures)
     if before or after:
         lines += ["## Screens", ""]
-        labels = [("Before", before), ("After", after)] if after else [("Now", before)]
-        header = [f"{name} · {lang}" for name, m in labels for lang in ("en", "ar")]
-        lines += ["| Pose | " + " | ".join(header) + " |", "|---|" + "---|" * len(header)]
-        for pose in POSES:
-            cells = [shot_cell(m, pose, lang, captures, out_dir) for _, m in labels for lang in ("en", "ar")]
-            if any(c != "—" for c in cells):
-                lines.append(f"| {POSE_NAMES[pose]} | " + " | ".join(cells) + " |")
-        lines.append("")
+        columns = [("Before", before), ("After", after)] if after else [("Now", before)]
+        lines += screen_rows(columns, captures, out_dir)
+    for m in extras:
+        lines += [f"### More screens: {m['label']}", ""] + screen_rows([("Now", m)], captures, out_dir)
 
     notes = [f"Preflight problem the run continued with: {p}" for p in pre.get("problems", [])]
     notes += pre.get("warnings", [])
-    for m in (before, after):
+    for m in [before, after] + extras:
         if m:
             notes += [f"{m['label']}: {w}" for w in m.get("warnings", [])]
     if notes:
         lines += ["## Warnings", ""] + [f"- {n}" for n in notes] + [""]
 
     unverified = ["Nothing here ran on a real iPhone Duo; every screen above is from the simulator."]
-    captured = {s["pose"] for m in (before, after) if m for s in m["shots"]}
+    captured = {s["pose"] for m in [before, after] + extras if m for s in m["shots"]}
     missing = [p for p in POSES if p not in captured]
     if missing:
         unverified.append(f"Poses not captured: {', '.join(missing)}.")

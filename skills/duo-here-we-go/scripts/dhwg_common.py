@@ -57,6 +57,15 @@ def find_duo(udid: Optional[str] = None) -> Optional[dict]:
     return (booted or duos or [None])[0]
 
 
+def pick_regular_iphone(devices: List[dict]) -> Optional[dict]:
+    """A non-foldable iPhone simulator for comparison, booted ones first."""
+    phones = [d for d in devices if d.get("isAvailable", True)
+              and ".SimDeviceType.iPhone-" in d.get("deviceTypeIdentifier", "")
+              and d.get("deviceTypeIdentifier") != DUO_DEVICE_TYPE]
+    booted = [d for d in phones if d.get("state") == "Booted"]
+    return (booted or phones or [None])[0]
+
+
 def ensure_booted(udid: str) -> None:
     state = next((d.get("state") for d in simctl_devices() if d["udid"] == udid), None)
     if state != "Booted":
