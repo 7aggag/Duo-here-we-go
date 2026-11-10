@@ -43,6 +43,12 @@ First find the app's own test hooks: grep the sources for `ProcessInfo.processIn
 python3 scripts/capture.py --app <path/App.app> --out <project>/dhwg-out --label baseline [-- <app launch args>]
 ```
 
+Look at the first shot before trusting the rest:
+
+- A system permission alert (notifications, tracking) covers every shot. Dismiss it once on the simulator, choosing the declining option unless the user says otherwise, then recapture; the choice lasts for the install.
+- A splash screen means the app was still loading (often a network check): raise `--wait`.
+- A video or looping animation never settles: pass a short `--settle-timeout` and accept the single warning it writes.
+
 It captures closed, open (180°) and half-open (90°) poses, in English and Arabic, waiting for each screen to stop moving. Exit 3 means hinge control failed: ask the user to set that pose in Device Hub, then rerun with `--no-hinge --poses <pose>`. Done when `dhwg-out/baseline/manifest.json` lists six stable shots, or each missing or unstable one is in its `warnings`, and you have looked at every shot.
 
 ### 4. Apple pass
@@ -55,7 +61,14 @@ Follow `references/apple-bridge.md`. Done when every file Apple's skill flags ha
 python3 scripts/dhwg_lint.py <project> --out <project>/dhwg-out/findings-lint.json --fail-on never
 ```
 
-For each finding, read its rule (`DHWG-RTL-*` in `references/rtl.md`, `DHWG-0xx` in `references/duo-layout.md`), open the code, and mark it confirmed or a false positive. A false positive is suppressed in code with a reason, after the user agrees. Then review every shot with the checklists in both references: each Arabic shot against its English twin, and each half-open shot against the hinge band. Record each visual problem in `dhwg-out/findings-visual.json` (a list; `id` is `DHWG-RTL-VIS` for a right-to-left problem and `DHWG-VIS` otherwise; `verified: "simulator"`; `evidence`: the shot path). When you can tie it to code, add `file` and `line`. Propose fixes; apply them only when the user asks. Done when every lint finding has a verdict and every shot has been reviewed.
+For each finding, read its rule (`DHWG-RTL-*` in `references/rtl.md`, `DHWG-0xx` in `references/duo-layout.md`), open the code, and mark it confirmed or a false positive. A false positive is suppressed in code with a reason, after the user agrees. Then review every shot with the checklists in both references: each Arabic shot against its English twin, and each half-open shot against the hinge band. Record each visual problem in `dhwg-out/findings-visual.json` (a list; `id` is `DHWG-RTL-VIS` for a right-to-left problem and `DHWG-VIS` otherwise; `verified: "simulator"`; `evidence`: the shot path). When you can tie it to code, add `file` and `line`.
+
+Two checks keep the findings honest:
+
+- **Regular iPhone first.** Before recording a visual problem, install the same build on a regular iPhone simulator and look for it there. A problem that shows on both is the app's, not the Duo's: mention it to the user, keep it out of the findings.
+- **Coverage.** List the screens the captures never reached (behind login, payment, deep flows) in one `DHWG-COVERAGE` finding with `verified: "unverified"`, so the report says what was not looked at.
+
+Propose fixes; apply them only when the user asks. Done when every lint finding has a verdict, every shot has been reviewed, and the coverage finding is written or every screen was reached.
 
 ### 6. After captures
 

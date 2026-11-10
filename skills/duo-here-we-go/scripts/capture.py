@@ -69,6 +69,15 @@ def stable_shot(udid: str, path: Path, min_wait: float, timeout: float):
         time.sleep(1.0)
 
 
+def moving_warnings(moving: list, total: int, timeout: float) -> list:
+    if not moving:
+        return []
+    if len(moving) == total and total > 1:
+        return [f"Every shot was still changing after {timeout:g}s (a video or looping animation on screen?); "
+                "shots are single frames of a moving screen."]
+    return [f"{name}: screen still changing after {timeout:g}s; the shot may show an animation." for name in moving]
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--app", required=True)
@@ -107,10 +116,16 @@ def main() -> int:
     if "ar" in langs and not info["arabic_in_bundle"]:
         manifest["warnings"].append("App bundle has no Arabic localization; 'ar' shots render left-to-right.")
 
+    moving = []
     for pose in poses:
         if not args.no_hinge:
             try:
-                hinge(udid, str(POSE_ANGLES[pose]))
+                try:
+                    hinge(udid, str(POSE_ANGLES[pose]))
+                except RuntimeError:
+                    # A busy simulator can miss the 2 s confirmation window; one slower retry.
+                    time.sleep(1.0)
+                    hinge(udid, "-t", "8", str(POSE_ANGLES[pose]))
                 settle(udid, pose)
             except RuntimeError as e:
                 manifest["warnings"].append(f"hinge control failed at pose {pose}: {e}")
@@ -128,12 +143,12 @@ def main() -> int:
                 manifest["warnings"].append(f"{pose}/{lang}: the screen never changed from the first frame after launch; "
                                             "the shot may be the blank launch screen.")
             elif not stable:
-                manifest["warnings"].append(f"{pose}/{lang}: screen still changing after {args.settle_timeout:g}s; "
-                                            "the shot may show an animation.")
+                moving.append(f"{pose}/{lang}")
             manifest["shots"].append({"pose": pose, "angle": POSE_ANGLES[pose], "lang": lang, "stable": stable,
                                       "display": shot["display"], "path": str(path.relative_to(out.parent))})
             log(f"{args.label}/{pose}/{lang} -> {shot['display']}")
 
+    manifest["warnings"] += moving_warnings(moving, len(manifest["shots"]), args.settle_timeout)
     write_json(out / "manifest.json", manifest)
     print(json.dumps(manifest, ensure_ascii=False, indent=2))
     return 0

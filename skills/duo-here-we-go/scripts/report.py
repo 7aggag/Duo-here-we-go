@@ -127,7 +127,10 @@ def build(args) -> str:
     missing = [p for p in POSES if p not in captured]
     if missing:
         unverified.append(f"Poses not captured: {', '.join(missing)}.")
-    unverified += [f"{f['id']} at `{f.get('file', '?')}:{f.get('line', '?')}`" for f in findings if f.get("verified") == "unverified"]
+    for f in findings:
+        if f.get("verified") == "unverified":
+            where = f" at `{f['file']}:{f.get('line', '?')}`" if f.get("file") else ""
+            unverified.append(f"{f['id']}{where}: {f.get('message', '')}")
     lines += ["## Not verified", ""] + [f"- {u}" for u in unverified] + [""]
     return "\n".join(lines)
 

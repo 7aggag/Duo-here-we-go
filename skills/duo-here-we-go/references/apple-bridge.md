@@ -20,7 +20,7 @@ Write `dhwg-out/findings-apple.json` as a JSON list, in your own words (no text 
 | Situation | `id` | `severity` | `message` |
 |---|---|---|---|
 | A file it changed | `APPLE-<task>` (`uiscreen`, `orientation`, `idiom`, `scene-lifecycle`, `safe-area`) | `info` | `Applied: <what changed>` |
-| A TODO it left | `APPLE-<task>` | `warn` | what is still open |
+| A TODO it left, or a case where it says to ask the user (a partial scene migration, a risky replacement) | `APPLE-<task>` | `warn` | what is still open and the choices; change nothing until the user decides |
 | A prerequisite check it reported as failing | `APPLE-prerequisite` | `error` | the key and what it blocks |
 | It ran and found nothing to change | `APPLE-summary` | `info` | which checks passed and which tasks found no target API |
 

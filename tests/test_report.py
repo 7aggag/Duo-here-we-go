@@ -71,6 +71,14 @@ class Report(unittest.TestCase):
         self.assertIn("Preflight problem the run continued with: Working tree has uncommitted changes.", text)
         self.assertIn("- No Arabic localization found.", text)
 
+    def test_unverified_finding_without_a_file_shows_its_message(self):
+        f = write(self.dir / "v.json", [{"id": "DHWG-COVERAGE", "source": "dhwg", "severity": "info",
+                                         "message": "Screens behind login were not captured.", "fix": "-",
+                                         "verified": "unverified"}])
+        text = self.render("--findings", str(f))
+        self.assertIn("- DHWG-COVERAGE: Screens behind login were not captured.", text)
+        self.assertNotIn("`?:?`", text)
+
     def test_missing_poses_are_listed_as_not_verified(self):
         write(self.out / "baseline" / "manifest.json", manifest("baseline", ["open"]))
         text = self.render("--captures", str(self.out))
