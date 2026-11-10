@@ -22,8 +22,9 @@ Write `dhwg-out/findings-apple.json` as a JSON list, in your own words (no text 
 | A file it changed | `APPLE-<task>` (`uiscreen`, `orientation`, `idiom`, `scene-lifecycle`, `safe-area`) | `info` | `Applied: <what changed>` |
 | A TODO it left | `APPLE-<task>` | `warn` | what is still open |
 | A prerequisite check it reported as failing | `APPLE-prerequisite` | `error` | the key and what it blocks |
+| It ran and found nothing to change | `APPLE-summary` | `info` | which checks passed and which tasks found no target API |
 
-Every entry has `source: "apple"`, `file`, `line` (the first changed line), `fix`, and `verified: "static"`.
+Every entry has `source: "apple"`, `fix`, and `verified: "static"`; entries tied to code also have `file` and `line` (the first changed line). Always write at least one entry, so the report shows the Apple pass ran.
 
 ## Fallback without Apple's skill
 

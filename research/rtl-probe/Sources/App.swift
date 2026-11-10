@@ -85,20 +85,37 @@ struct EnvProbe: View {
     }
 }
 
+// -SidebarMax N mirrors Daftar's split view: balanced style, all columns, width min 280 / ideal 320 / max N.
 struct SplitProbe: View {
+    private let sidebarMax = UserDefaults.standard.double(forKey: "SidebarMax")
+    @State private var visibility: NavigationSplitViewVisibility = .all
+
+    private var sidebar: some View {
+        List(1...4, id: \.self) { Text("Item \($0)") }
+            .navigationTitle("Sidebar")
+            .onGeometryChange(for: CGRect.self, of: { $0.frame(in: .global) }) { Probe.log("split.sidebarFrame", Probe.r($0)) }
+    }
+
+    private var detail: some View {
+        EnvProbe(tag: "split.detail")
+            .navigationTitle("Detail")
+            .toolbar {
+                ToolbarItem { Button("Share", systemImage: "square.and.arrow.up") {} }
+                ToolbarItem { Button("Edit", systemImage: "pencil") {} }
+            }
+            .onGeometryChange(for: CGRect.self, of: { $0.frame(in: .global) }) { Probe.log("split.detailFrame", Probe.r($0)) }
+    }
+
     var body: some View {
-        NavigationSplitView {
-            List(1...4, id: \.self) { Text("Item \($0)") }
-                .navigationTitle("Sidebar")
-                .onGeometryChange(for: CGRect.self, of: { $0.frame(in: .global) }) { Probe.log("split.sidebarFrame", Probe.r($0)) }
-        } detail: {
-            EnvProbe(tag: "split.detail")
-                .navigationTitle("Detail")
-                .toolbar {
-                    ToolbarItem { Button("Share", systemImage: "square.and.arrow.up") {} }
-                    ToolbarItem { Button("Edit", systemImage: "pencil") {} }
-                }
-                .onGeometryChange(for: CGRect.self, of: { $0.frame(in: .global) }) { Probe.log("split.detailFrame", Probe.r($0)) }
+        if sidebarMax > 0 {
+            NavigationSplitView(columnVisibility: $visibility) {
+                sidebar.navigationSplitViewColumnWidth(min: 280, ideal: 320, max: sidebarMax)
+            } detail: {
+                detail
+            }
+            .navigationSplitViewStyle(.balanced)
+        } else {
+            NavigationSplitView { sidebar } detail: { detail }
         }
     }
 }

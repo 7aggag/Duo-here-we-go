@@ -22,7 +22,7 @@ Scripts are in `scripts/` (Python 3.9+, standard library). Run them with `python
 python3 scripts/preflight.py <project> --out <project>/dhwg-out/preflight.json
 ```
 
-Done when it exits 0, or the user has fixed or explicitly accepted each item in `problems`. If `arabic_localization` is false, tell the user the RTL step can lint but cannot show Arabic layout until the app ships an Arabic localization.
+Done when it exits 0, or the user has fixed or explicitly accepted each item in `problems`. It adds `dhwg-out/` to the repo's local `.git/info/exclude`, so the scratch folder never dirties the tree. If `arabic_localization` is false, tell the user the RTL step can lint but cannot show Arabic layout until the app ships an Arabic localization.
 
 ### 2. Build for the Duo simulator
 
@@ -37,23 +37,25 @@ Done when the `.app` exists under `dhwg-out/DerivedData/Build/Products/` and `xc
 
 ### 3. Baseline captures
 
+First find the app's own test hooks: grep the sources for `ProcessInfo.processInfo.arguments` and the `UserDefaults` keys behind onboarding, so the captures land on real screens with data instead of a first-run welcome. A UI-testing flag that seeds sample data is the best case; a defaults key such as `-settings.onboardingDone YES` also works. Pass them after `--`.
+
 ```bash
 python3 scripts/capture.py --app <path/App.app> --out <project>/dhwg-out --label baseline [-- <app launch args>]
 ```
 
-It captures closed, open (180°) and half-open (90°) poses, in English and Arabic. Exit 3 means hinge control failed: ask the user to set that pose in Device Hub, then rerun with `--no-hinge --poses <pose>`. Done when `dhwg-out/baseline/manifest.json` lists six shots, or each missing one is in its `warnings`, and you have looked at every shot.
+It captures closed, open (180°) and half-open (90°) poses, in English and Arabic, waiting for each screen to stop moving. Exit 3 means hinge control failed: ask the user to set that pose in Device Hub, then rerun with `--no-hinge --poses <pose>`. Done when `dhwg-out/baseline/manifest.json` lists six stable shots, or each missing or unstable one is in its `warnings`, and you have looked at every shot.
 
 ### 4. Apple pass
 
 Follow `references/apple-bridge.md`. Done when every file Apple's skill flags has a diff or a stated reason to skip, and `dhwg-out/findings-apple.json` exists.
 
-### 5. RTL
+### 5. Lint and visual review
 
 ```bash
 python3 scripts/dhwg_lint.py <project> --out <project>/dhwg-out/findings-lint.json --fail-on never
 ```
 
-For each finding, read its rule in `references/rtl.md`, open the code, and mark it confirmed or a false positive. A false positive is suppressed in code with a reason, after the user agrees. Then compare every Arabic baseline shot with its English twin using the checklist in `references/rtl.md`, and record each visual problem in `dhwg-out/findings-visual.json` (a list, `id: "DHWG-RTL-VIS"`, `verified: "simulator"`, `evidence`: the shot path). Propose fixes; apply them only when the user asks. Done when every lint finding has a verdict and every Arabic shot has been compared.
+For each finding, read its rule (`DHWG-RTL-*` in `references/rtl.md`, `DHWG-0xx` in `references/duo-layout.md`), open the code, and mark it confirmed or a false positive. A false positive is suppressed in code with a reason, after the user agrees. Then review every shot with the checklists in both references: each Arabic shot against its English twin, and each half-open shot against the hinge band. Record each visual problem in `dhwg-out/findings-visual.json` (a list; `id` is `DHWG-RTL-VIS` for a right-to-left problem and `DHWG-VIS` otherwise; `verified: "simulator"`; `evidence`: the shot path). When you can tie it to code, add `file` and `line`. Propose fixes; apply them only when the user asks. Done when every lint finding has a verdict and every shot has been reviewed.
 
 ### 6. After captures
 

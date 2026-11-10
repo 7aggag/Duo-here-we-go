@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Static checks for RTL problems on iPhone Duo, measured on the iOS 27.1 simulator.
+"""Static checks for iPhone Duo layout and RTL problems, measured on the iOS 27.1 simulator.
 
 usage: dhwg_lint.py <project-dir> [--out findings-lint.json] [--fail-on error|warn|never]
 
@@ -28,6 +28,9 @@ PHYSICAL = re.compile(r"\.(left|right)\b|\b(minX|maxX)\b|\binsets?\.(left|right)
 FIXED_COLUMN = re.compile(
     r"navigationSplitViewColumnWidth\s*\(\s*\d|\b(preferred|minimum|maximum)PrimaryColumnWidth\s*=\s*\d")
 FIXED_FRAME_WIDTH = re.compile(r"\.frame\s*\(\s*width\s*:\s*\d")
+COLUMN_WIDTH = re.compile(r"navigationSplitViewColumnWidth\s*\(([^)]*)\)")
+# Measured: at 90° a left-to-right sidebar snaps to the hinge only when its max width exceeds the hinge centre.
+HINGE_CENTER_PT = 475
 SUPPRESS = re.compile(r"//\s*dhwg:disable(-next-line)?\s+([\w\-, ]+?)\s+--\s+(.+)$")
 
 
@@ -115,6 +118,18 @@ def lint(root: Path) -> Dict[str, List[dict]]:
                         "The vertical bar edge is leading/trailing and flips with the layout direction while the bar "
                         "stays on the same physical side; mapping it to left/right breaks in Arabic.",
                         "Keep the value directional (leading/trailing padding, safeAreaLayoutGuide anchors)."))
+
+            for m in COLUMN_WIDTH.finditer(line):
+                width_args = m.group(1)
+                cap = re.search(r"\bmax\s*:\s*(\d+(?:\.\d+)?)", width_args) or re.fullmatch(r"\s*(\d+(?:\.\d+)?)\s*", width_args)
+                if cap and float(cap.group(1)) <= HINGE_CENTER_PT:
+                    out.append(dict(finding(
+                        "DHWG-001", "warn", f, i,
+                        f"Sidebar width is capped at {cap.group(1)} pt. Half-open (90°) in a left-to-right language, "
+                        f"the split view aligns columns to the hinge only when the sidebar may grow past "
+                        f"{HINGE_CENTER_PT} pt; otherwise the detail column runs across the fold.",
+                        f"Raise the max above {HINGE_CENTER_PT} (e.g. max: 480) or drop it, then check the English "
+                        "half-open capture."), source="dhwg"))
 
             if FIXED_COLUMN.search(line) or (has_arrangement and FIXED_FRAME_WIDTH.search(line)):
                 out.append(finding(

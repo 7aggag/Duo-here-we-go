@@ -170,13 +170,13 @@ class RTL004(unittest.TestCase):
                 }
             }
         """}))
-        self.assertEqual(ids(r), ["DHWG-RTL-004"])
-        self.assertEqual(r["findings"][0]["severity"], "info")
+        self.assertEqual(ids(r), ["DHWG-001", "DHWG-RTL-004"])
+        self.assertEqual(next(f for f in r["findings"] if f["id"] == "DHWG-RTL-004")["severity"], "info")
 
     def test_flexible_column_width_is_fine(self):
         r = lint(project({"S.swift": """
             import SwiftUI
-            let x = List { }.navigationSplitViewColumnWidth(min: 280, ideal: 320, max: 400)
+            let x = List { }.navigationSplitViewColumnWidth(min: 280, ideal: 320, max: 480)
         """}))
         self.assertEqual(ids(r), [])
 
@@ -186,6 +186,26 @@ class RTL004(unittest.TestCase):
             func f(_ s: UISplitViewController) { s.preferredPrimaryColumnWidth = 320 }
         """}))
         self.assertEqual(ids(r), ["DHWG-RTL-004"])
+
+
+class DHWG001(unittest.TestCase):
+    def test_cap_at_or_below_hinge_center_is_flagged(self):
+        for cap in ("420", "475"):
+            r = lint(project({"S.swift": f"""
+                import SwiftUI
+                let s = List {{ }}.navigationSplitViewColumnWidth(min: 280, ideal: 320, max: {cap})
+            """}))
+            self.assertEqual(ids(r), ["DHWG-001"], cap)
+            self.assertEqual(r["findings"][0]["source"], "dhwg")
+            self.assertEqual(r["findings"][0]["severity"], "warn")
+
+    def test_cap_above_hinge_center_or_none_is_fine(self):
+        r = lint(project({"S.swift": """
+            import SwiftUI
+            let a = List { }.navigationSplitViewColumnWidth(min: 280, ideal: 320, max: 476)
+            let b = List { }.navigationSplitViewColumnWidth(min: 280, ideal: 320)
+        """}))
+        self.assertEqual(ids(r), [])
 
 
 class Suppression(unittest.TestCase):

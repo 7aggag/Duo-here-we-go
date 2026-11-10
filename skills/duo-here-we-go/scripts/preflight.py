@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""Read-only checks before Duo Here We Go touches a project.
+"""Checks before Duo Here We Go touches a project. Read-only, except that it adds
+dhwg-out/ to the repository's local .git/info/exclude so the scratch folder never
+shows up as a change.
 
 usage: preflight.py <project-dir> [--out preflight.json]
 exit 0 = ready, 2 = blocking problems (listed in "problems").
@@ -24,10 +26,22 @@ def version_at_least(v: str, minimum: tuple) -> bool:
     return parts >= minimum
 
 
+def exclude_output(root: Path) -> None:
+    rel = run(["git", "-C", str(root), "rev-parse", "--git-path", "info/exclude"]).stdout.strip()
+    path = Path(rel) if Path(rel).is_absolute() else root / rel
+    text = path.read_text(encoding="utf-8") if path.exists() else ""
+    if "dhwg-out/" in text.splitlines():
+        return
+    path.parent.mkdir(parents=True, exist_ok=True)
+    prefix = "\n" if text and not text.endswith("\n") else ""
+    path.write_text(text + prefix + "dhwg-out/\n", encoding="utf-8")
+
+
 def git_state(root: Path) -> dict:
     inside = run(["git", "-C", str(root), "rev-parse", "--is-inside-work-tree"], check=False)
     if inside.returncode != 0:
         return {"repo": False}
+    exclude_output(root)
     status = run(["git", "-C", str(root), "status", "--porcelain"], check=False).stdout
     branch = run(["git", "-C", str(root), "branch", "--show-current"], check=False).stdout.strip()
     return {"repo": True, "clean": status.strip() == "", "branch": branch}
