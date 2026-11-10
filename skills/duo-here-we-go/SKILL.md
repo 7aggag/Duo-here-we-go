@@ -22,7 +22,9 @@ Scripts are in `scripts/` (Python 3.9+, standard library). Run them with `python
 python3 scripts/preflight.py <project> --out <project>/dhwg-out/preflight.json
 ```
 
-Done when it exits 0, or the user has fixed or explicitly accepted each item in `problems`. It adds `dhwg-out/` to the repo's local `.git/info/exclude`, so the scratch folder never dirties the tree. If `arabic_localization` is false, tell the user the RTL step can lint but cannot show Arabic layout until the app ships an Arabic localization.
+If it reports no iPhone Duo simulator, run `python3 scripts/setup_duo.py`. It creates one when an installed runtime supports the device. Exit 5 means the runtime itself is missing: tell the user it is a ~8 GB download from Apple and how much disk is free, and rerun with `--download` only after they agree. Exit 2 means the Xcode is older than 27.1; exit 6 means not enough disk.
+
+Done when preflight exits 0, or the user has fixed or explicitly accepted each item in `problems`. Preflight also adds `dhwg-out/` to the repo's local `.git/info/exclude`, so the scratch folder never dirties the tree. If `arabic_localization` is false, tell the user the RTL step can lint but cannot show Arabic layout until the app ships an Arabic localization.
 
 ### 2. Build for the Duo simulator
 

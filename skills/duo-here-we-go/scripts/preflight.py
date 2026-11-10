@@ -95,8 +95,7 @@ def main() -> int:
 
     duo = find_duo()
     if duo is None:
-        problems.append("No iPhone Duo simulator. Install the iOS 27.1 runtime (xcodebuild -downloadPlatform iOS) "
-                        "and create one: xcrun simctl create 'iPhone Duo' com.apple.CoreSimulator.SimDeviceType.iPhone-Duo <iOS 27.1 runtime id>.")
+        problems.append("No iPhone Duo simulator. Run scripts/setup_duo.py to create one.")
 
     git = git_state(root)
     if not git["repo"]:
