@@ -107,9 +107,9 @@ def svg(p):
 <rect width="{W}" height="{H}" fill="{p["bg"]}"/>
 <g opacity="0.6">{grid}</g>
 <g font-family="{FONT}" text-anchor="middle">
-<rect x="{W / 2 - 170}" y="34" width="340" height="34" rx="17" fill="{p["pill_bg"]}" stroke="{p["pill_line"]}"/>
-<circle cx="{W / 2 - 146}" cy="51" r="5" fill="{p["accent"]}"/>
-<text x="{W / 2 + 8}" y="56" font-size="16" fill="{p["muted"]}">Agent skill · SwiftUI &amp; UIKit · iPhone Duo</text>
+<rect x="{W / 2 - 220}" y="34" width="440" height="34" rx="17" fill="{p["pill_bg"]}" stroke="{p["pill_line"]}"/>
+<circle cx="{W / 2 - 196}" cy="51" r="5" fill="{p["accent"]}"/>
+<text x="{W / 2 + 8}" y="56" font-size="16" fill="{p["muted"]}">Agent skill · SwiftUI · UIKit · Flutter · iPhone Duo</text>
 <text x="{W / 2}" y="140" font-size="76" font-weight="800" letter-spacing="-1.5" fill="url(#title)">Duo Here We Go</text>
 <text x="{W / 2}" y="194" font-size="30" font-weight="700" fill="{p["ink"]}">Ready your iOS app for iPhone Duo, in English <tspan fill="{p["accent2"]}">and</tspan> <tspan font-family="{AR_FONT}" fill="{p["accent2"]}">العربية</tspan>.</text>
 <text x="{W / 2}" y="232" font-size="19" fill="{p["muted"]}">Apple's resizability skill first, then the vertical bar, the hinge and right-to-left.</text>

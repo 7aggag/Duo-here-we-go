@@ -3,7 +3,7 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/assets/banner-dark.svg" />
   <source media="(prefers-color-scheme: light)" srcset="docs/assets/banner-light.svg" />
-  <img src="docs/assets/banner-light.svg" alt="Duo Here We Go: ready your iOS app for iPhone Duo, in English and Arabic. iPhone Duo closed, half-open in English, and half-open in Arabic, where the sidebar moves beside the vertical bar and the bar stays on the right." width="100%" />
+  <img src="docs/assets/banner-light.svg" alt="Duo Here We Go: ready your iOS or Flutter app for iPhone Duo, in English and Arabic. iPhone Duo closed, half-open in English, and half-open in Arabic, where the sidebar moves beside the vertical bar and the bar stays on the right." width="100%" />
 </picture>
 
 # Duo Here We Go
@@ -14,6 +14,7 @@
 
 [![MIT license](https://img.shields.io/badge/license-MIT-2fbf71?style=flat-square)](LICENSE)
 [![Xcode 27.1](https://img.shields.io/badge/built_for-Xcode_27.1_·_iOS_27.1-1f9d5a?style=flat-square)](#requirements)
+[![Flutter 3.41+](https://img.shields.io/badge/Flutter-3.41+-02569B?style=flat-square)](#flutter)
 [![Agent Skills](https://img.shields.io/badge/Agent_Skills-SKILL.md-f2b134?style=flat-square)](#install)
 [![Agents](https://img.shields.io/badge/agents-Claude_Code_·_Codex_·_Cursor_·_OpenCode-14201a?style=flat-square)](#install)
 [![RTL](https://img.shields.io/badge/RTL-Arabic_first-c98a0c?style=flat-square)](#why-iphone-duo-needs-its-own-pass)
@@ -35,6 +36,7 @@ iPhone Duo folds. The closed outer display is compact; open, the inner display i
 | **Arabic** | The bar stays on the right; `toolbarVerticalEdge` flips from `trailing` to `leading`; the sidebar moves beside the bar, into the narrow half | every pose |
 | **In-app language switch** | Forcing RTL through `UIView.appearance()` leaves the bar on the wrong side and an empty strip on the left | 88 pt (Apple forum 852870) |
 | **Two coordinate systems** | `UIView.reservedRegions` is physical; SwiftUI's defaults to `.mirrors` | x = 455 vs 371 in Arabic |
+| **Flutter** | The column is only a right safe-area inset and the fold never arrives, so lists slide under the clock (titles, in Arabic) and dialogs cross the hinge | 84 pt, every pose |
 
 Nothing else in this space checks the right-to-left side. Duo Here We Go treats Arabic as a first-class pose.
 
@@ -145,7 +147,7 @@ Or in Arabic: *جهّز التطبيق ده عشان يشتغل كويس على 
 - **Changes** your code only after you say yes at a checkpoint, and leaves every change uncommitted for you to review. It never commits or pushes.
 - **Writes** its captures, findings and report to `dhwg-out/`, which it adds to your repo's local `.git/info/exclude`.
 - **Runs** `xcodebuild` (or `flutter build ios` for Flutter apps), `xcrun simctl`, `xcrun agent skills export` (Apple's skill, into a temp folder), its own Python scripts, and the bundled `hinge` helper, which runs inside the simulator only.
-- **Network:** only Apple's simulator runtime download, and only if it is missing and you agree.
+- **Network:** only Apple's simulator runtime download, and only if it is missing and you agree. For a Flutter app, `flutter build` may also fetch the app's own packages from pub.dev.
 - **Data:** it collects nothing and sends nothing anywhere.
 
 ## What's inside
@@ -165,7 +167,7 @@ tests/                   python3 -m unittest discover -s tests
 
 ## Status
 
-Built in November 2026, right after iPhone Duo shipped, and already run on three real apps: SwiftUI, UIKit with a login flow, and a large SwiftUI app with Firebase. Every value comes from the Xcode 27.1 iPhone Duo simulator. Reports from real devices are welcome; open an issue with what you measured.
+Built in November 2026, right after iPhone Duo shipped, and already run on three real apps: SwiftUI, UIKit with a login flow, and a large SwiftUI app with Firebase. Flutter support is measured on a probe app with Flutter 3.47.9 and has not run on a real Flutter app yet. Every value comes from the Xcode 27.1 iPhone Duo simulator. Reports from real devices are welcome; open an issue with what you measured.
 
 ## Credits
 
