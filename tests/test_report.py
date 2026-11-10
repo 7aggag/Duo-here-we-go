@@ -71,6 +71,17 @@ class Report(unittest.TestCase):
         self.assertIn("Preflight problem the run continued with: Working tree has uncommitted changes.", text)
         self.assertIn("- No Arabic localization found.", text)
 
+    def test_findings_without_source_are_counted_by_their_id(self):
+        f = write(self.dir / "visual.json", [
+            {"id": "DHWG-VIS", "severity": "warn", "message": "m", "fix": "f", "verified": "simulator"},
+            {"id": "DHWG-RTL-VIS", "severity": "info", "message": "m", "fix": "f", "verified": "simulator"},
+            {"id": "DHWG-COVERAGE", "severity": "warn", "message": "m", "fix": "f", "verified": "unverified"},
+        ])
+        text = self.render("--findings", str(f))
+        self.assertIn("| dhwg | 0 | 2 | 0 |", text)
+        self.assertIn("| rtl | 0 | 0 | 1 |", text)
+        self.assertNotIn("| ? |", text)
+
     def test_regular_iphone_row_and_extra_screen_sets(self):
         base = manifest("baseline", ["closed", "open", "half", "iphone"])
         write(self.out / "baseline" / "manifest.json", base)

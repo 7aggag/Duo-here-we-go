@@ -22,6 +22,13 @@ POSE_NAMES = {"closed": "Closed (outer display)", "open": "Open 180°", "half": 
 MAIN_LABELS = ("baseline", "after")
 
 
+def source_from_id(rule_id: str) -> str:
+    for prefix, source in (("DHWG-RTL-", "rtl"), ("DHWG-", "dhwg"), ("APPLE-", "apple")):
+        if rule_id.startswith(prefix):
+            return source
+    return "other"
+
+
 def load_findings(paths: List[str]):
     findings, suppressed = [], []
     for p in paths:
@@ -31,6 +38,8 @@ def load_findings(paths: List[str]):
         else:
             findings += data.get("findings", [])
             suppressed += data.get("suppressed", [])
+    for f in findings:
+        f.setdefault("source", source_from_id(f.get("id", "")))
     findings.sort(key=lambda f: (SEVERITIES.index(f.get("severity", "info")), f.get("file", ""), f.get("line", 0)))
     return findings, suppressed
 
@@ -100,7 +109,7 @@ def build(args) -> str:
         meta.append(f"**Simulator runtime:** {os_name} {version.replace('-', '.')}")
     lines += [" · ".join(meta), "", f"## Readiness: {readiness(findings)}", ""]
 
-    sources = sorted({f.get("source", "?") for f in findings})
+    sources = sorted({f["source"] for f in findings})
     lines += ["| Source | " + " | ".join(SEVERITIES) + " |", "|---|" + "---|" * len(SEVERITIES)]
     for s in sources:
         counts = [sum(1 for f in findings if f.get("source") == s and f["severity"] == sev) for sev in SEVERITIES]

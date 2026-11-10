@@ -65,7 +65,7 @@ Follow `references/apple-bridge.md`. Done when every file Apple's skill flags ha
 python3 scripts/dhwg_lint.py <project> --out <project>/dhwg-out/findings-lint.json --fail-on never
 ```
 
-For each finding, read its rule (`DHWG-RTL-*` in `references/rtl.md`, `DHWG-0xx` in `references/duo-layout.md`), open the code, and mark it confirmed or a false positive. A false positive is suppressed in code with a reason, after the user agrees. Then review every shot with the checklists in both references: each Arabic shot against its English twin, and each half-open shot against the hinge band. Record each visual problem in `dhwg-out/findings-visual.json` (a list; `id` is `DHWG-RTL-VIS` for a right-to-left problem and `DHWG-VIS` otherwise; `verified: "simulator"`; `evidence`: the shot path). When you can tie it to code, add `file` and `line`.
+For each finding, read its rule (`DHWG-RTL-*` in `references/rtl.md`, `DHWG-0xx` in `references/duo-layout.md`), open the code, and mark it confirmed or a false positive. A false positive is suppressed in code with a reason, after the user agrees. Then review every shot with the checklists in both references: each Arabic shot against its English twin, and each half-open shot against the hinge band. Record each visual problem in `dhwg-out/findings-visual.json` (a list; `id` is `DHWG-RTL-VIS` with `source: "rtl"` for a right-to-left problem, `DHWG-VIS` with `source: "dhwg"` otherwise; `severity`; `verified: "simulator"`; `evidence`: the shot path). When you can tie it to code, add `file` and `line`.
 
 Two checks keep the findings honest:
 
