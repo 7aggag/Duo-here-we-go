@@ -72,6 +72,7 @@ flowchart LR
 5. **Lint and review**: static rules for the bar, the hinge and RTL, then every Arabic shot against its English twin and every half-open shot against the hinge band.
 6. **Checkpoint**: it stops and shows you each finding with the fix it proposes. Nothing changes until you say yes.
 7. **Fix and capture again**, then one **REPORT.md** with a readiness line, the findings, a before/after screen grid and an honest *Not verified* list.
+8. **App Store screenshots**, only if you ask: the after shots, in each language, at the iPhone Duo sizes App Store Connect takes, ready for you to upload.
 
 ## What it catches
 
@@ -133,6 +134,14 @@ Open your agent in the app's folder and ask:
 
 Or in Arabic: *جهّز التطبيق ده عشان يشتغل كويس على iPhone Duo*. The agent answers in the language you write in. Everything it produces lands in `dhwg-out/`, with `REPORT.md` on top.
 
+### App Store screenshots
+
+When the app is ready, ask for its store screenshots:
+
+> Make the iPhone Duo App Store screenshots, in English and Arabic.
+
+App Store Connect takes iPhone Duo screenshots at 1398 × 2034 (outer display) and 2007 × 2853 (inner display), and [shows a badge](https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications/) on the product page when they are there. The skill captures the screens you pick in every pose and language, keeps the shots at those sizes, removes the alpha channel App Store Connect rejects, and writes up to 10 per language to `dhwg-out/store/<lang>/`. The Arabic ones are captured in Arabic, never mirrored from English, because the bar does not move. Each folder is one set: App Store Connect keeps a single iPhone Duo set per language that takes both sizes together, up to 10. It adds no titles or frames and uploads nothing: you add each folder under iPhone Duo in that language's Media Manager.
+
 ## Requirements
 
 - macOS with Xcode 27.1 or later. The skill creates the iPhone Duo simulator, and downloads its runtime (~8 GB) only after asking you. From Xcode 27.2 the Duo has its own runtime, separate from the other iPhones'; the skill picks the right one.
@@ -154,9 +163,9 @@ Or in Arabic: *جهّز التطبيق ده عشان يشتغل كويس على 
 
 ```text
 skills/duo-here-we-go/
-  SKILL.md               the eight steps the agent follows
+  SKILL.md               the eight steps the agent follows, plus App Store screenshots
   references/            Apple bridge, RTL rules, iPhone Duo layout rules, Flutter rules, API cheat sheet
-  scripts/               preflight, simulator setup, capture, lint, report (Python, standard library)
+  scripts/               preflight, simulator setup, capture, lint, report, store screenshots (Python, standard library)
   vendor/hinge/          the hinge CLI that drives the simulator's fold
 .claude-plugin/          Claude Code plugin and marketplace manifests
 research/rtl-probe/      the probe apps and captures behind the RTL rules

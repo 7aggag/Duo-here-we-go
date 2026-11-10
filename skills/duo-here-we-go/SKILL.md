@@ -1,6 +1,6 @@
 ---
 name: duo-here-we-go
-description: Readies an existing SwiftUI, UIKit or Flutter app for iPhone Duo, Apple's foldable. Runs Apple's app-resizability skill first, then checks Arabic and right-to-left layout around the vertical bar and the hinge, captures every pose on the Duo simulator, and writes one before/after readiness report. Use when asked to prepare or optimize an iOS or Flutter app for iPhone Duo or the foldable iPhone, to check Arabic or RTL on iPhone Duo, or for a Duo readiness report or pose screenshots.
+description: Readies an existing SwiftUI, UIKit or Flutter app for iPhone Duo, Apple's foldable. Runs Apple's app-resizability skill first, then checks Arabic and right-to-left layout around the vertical bar and the hinge, captures every pose on the Duo simulator, and writes one before/after readiness report. Use when asked to prepare or optimize an iOS or Flutter app for iPhone Duo or the foldable iPhone, to check Arabic or RTL on iPhone Duo, or for a Duo readiness report, pose screenshots, or iPhone Duo App Store screenshots.
 ---
 
 # Duo Here We Go
@@ -96,3 +96,17 @@ python3 scripts/report.py --out <project>/dhwg-out/REPORT.md --captures <project
 ```
 
 Done when `REPORT.md` exists and you have told the user its readiness line, each error, every item under "Not verified", and which files changed (uncommitted).
+
+### 9. App Store screenshots (only when asked)
+
+Run this only when the user asks for store screenshots. App Store Connect accepts iPhone Duo screenshots at 1398 × 2034 (outer display) and 2007 × 2853 (inner display), in either orientation, and shows a badge on the product page when they are there. Capture the screens worth showing first, after the fixes and with the app's sample-data hooks, one label per screen (`--label store-home`, `--label store-detail`, ...), then:
+
+```bash
+python3 scripts/store_shots.py --captures <project>/dhwg-out --labels store-home,store-detail --poses open,half,closed
+```
+
+It keeps the Duo shots at those sizes, drops the alpha channel the simulator adds (App Store Connect rejects it), and writes `dhwg-out/store/<lang>/NN-<label>-<pose>.jpg` in label order, then pose order, at most 10 per language. Arabic shots of an app with no Arabic localization are left out: store screenshots in Arabic are always captured in Arabic, never mirrored from English (`references/rtl.md`). Look at every file before handing them over.
+
+App Store Connect keeps one iPhone Duo set per language that takes both sizes together, up to 10 (API display type `APP_IPHONE_DUO`), so each language folder is one set.
+
+It adds no titles, frames or marketing text and uploads nothing. Done when you have told the user where each language folder is, each warning, and that they add each folder themselves, in file-name order, under iPhone Duo in that language's Media Manager in App Store Connect. Mention the product-page preview there, and that `fastlane deliver` and the `asc` CLI can upload to `APP_IPHONE_DUO` if they want to automate it later.
