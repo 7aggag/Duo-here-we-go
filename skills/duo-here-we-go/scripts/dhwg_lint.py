@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Static checks for iPhone Duo layout, RTL and device-copy problems, measured on the iOS 27.1 simulator.
+"""Static checks for iPhone Duo layout, RTL and device-copy problems in Swift and Flutter projects, measured on the iOS 27.1 simulator.
 
 usage: dhwg_lint.py <project-dir> [--out findings-lint.json] [--fail-on error|warn|never]
 
@@ -32,9 +32,19 @@ COLUMN_WIDTH = re.compile(r"navigationSplitViewColumnWidth\s*\(([^)]*)\)")
 # Measured: at 90° a left-to-right sidebar snaps to the hinge only when its max width exceeds the hinge centre.
 HINGE_CENTER_PT = 475
 # iPhone Duo has Touch ID in the side button and no Face ID, so hard-coded Face ID copy is wrong there.
-FACE_ID_COPY = re.compile(r'"[^"\n]*(?:\bFace\s?ID\b|بصمة الوجه|التعرف على الوجه)[^"\n]*"', re.I)
+FACE_ID_COPY = re.compile(r"""["'][^"'\n]*(?:\bFace\s?ID\b|بصمة الوجه|التعرف على الوجه)[^"'\n]*["']""", re.I)
 BIOMETRY_TYPE = re.compile(r"\bbiometryType\b")
 COPY_KEY = re.compile(r'^\s*"(NSFaceIDUsageDescription)"')
+# Flutter (Dart). Flutter reads the Duo's system column as a physical safe-area inset and, without a
+# bridge package, never reports the fold on iOS (flutter/flutter#192515).
+FOLD_BRIDGES = ("foldable", "duo_kit", "iphone_duo_ui_pro", "duo_display")
+DISPLAY_FEATURES = re.compile(r"\bdisplayFeatures(?:Of)?\b|\bDisplayFeatureSubScreen\b")
+ORIENTATION_LOCK = re.compile(r"setPreferredOrientations\s*\(")
+DIRECTIONAL_FROM_PHYSICAL = re.compile(
+    r"EdgeInsetsDirectional\b.*\b(?:viewPadding|padding|viewInsets)\s*\.\s*(?:left|right)\b"
+    r"|\b(?:viewPadding|padding)\s*\.\s*(?:left|right)\b.*EdgeInsetsDirectional\b")
+DROPS_RIGHT_INSET = re.compile(r"\bremoveRight\s*:\s*true\b|\bSafeArea\s*\([^)]*\bright\s*:\s*false\b")
+FLUTTER_BIOMETRY = re.compile(r"\bBiometricType\b|\bgetAvailableBiometrics\b")
 SUPPRESS = re.compile(r"//\s*dhwg:disable(-next-line)?\s+([\w\-, ]+?)\s+--\s+(.+)$")
 
 
@@ -78,13 +88,13 @@ def finding(rule, severity, f: SourceFile, i: int, message: str, fix: str) -> di
 
 
 def face_id_findings(files: List[SourceFile], strings: List[SourceFile]) -> List[dict]:
-    adapts = any(BIOMETRY_TYPE.search(f.text) for f in files)
+    adapts = any(BIOMETRY_TYPE.search(f.text) or FLUTTER_BIOMETRY.search(f.text) for f in files)
     out = []
     for f in files + strings:
         if f.path.name.startswith("InfoPlist."):
             continue  # NSFaceIDUsageDescription is only shown on Face ID devices
         for i in range(len(f.lines)):
-            line = f.code(i) if f.path.suffix == ".swift" else f.lines[i]
+            line = f.code(i) if f.path.suffix in (".swift", ".dart") else f.lines[i]
             if not FACE_ID_COPY.search(line) or COPY_KEY.search(line):
                 continue
             out.append(dict(finding(
@@ -97,9 +107,61 @@ def face_id_findings(files: List[SourceFile], strings: List[SourceFile]) -> List
     return out
 
 
+def flutter_findings(root: Path, dart: List[SourceFile]) -> List[dict]:
+    pubspec = (root / "pubspec.yaml").read_text(errors="ignore") if (root / "pubspec.yaml").exists() else ""
+    bridged = any(re.search(rf"^\s+{b}\s*:", pubspec, re.M) for b in FOLD_BRIDGES)
+    out = []
+
+    def add(rule, severity, f, i, message, fix, source="dhwg"):
+        out.append(dict(finding(rule, severity, f, i, message, fix), source=source))
+
+    for f in dart:
+        for i in range(len(f.lines)):
+            line = f.code(i)
+            if not line.strip():
+                continue
+            if DISPLAY_FEATURES.search(line) and not bridged:
+                add("DHWG-FL-001", "warn", f, i,
+                    "Flutter fills MediaQuery.displayFeatures only on Android: on iPhone Duo the list is always empty, "
+                    "so this fold logic never runs and dialogs and sheets can sit across the half-open fold.",
+                    "Add a bridge package that reports the hinge (for example foldable, pinned) after the user agrees, "
+                    "or check that the project's Flutter version already includes flutter/flutter#193025.")
+            if ORIENTATION_LOCK.search(line):
+                window = " ".join(f.code(j) for j in range(i, min(len(f.lines), i + 4)))
+                if "portrait" in window and "landscape" not in window:
+                    add("DHWG-FL-002", "warn", f, i,
+                        "A portrait-only orientation lock. On the Duo's inner display a lock set at run time persists, "
+                        "later requests to change it fail, and the inner display ignores supported orientations anyway.",
+                        "Remove the lock for iPhone Duo (keep all orientations) and lay out from the available size.")
+            if DROPS_RIGHT_INSET.search(line):
+                add("DHWG-FL-004", "warn", f, i,
+                    "The right safe-area inset is dropped. On iPhone Duo that inset is the 84 pt system column, "
+                    "on the physical right in every language, so content slides under it.",
+                    "Keep the right inset (SafeArea right: true, no removeRight), or pad by viewPadding.right yourself.")
+            if DIRECTIONAL_FROM_PHYSICAL.search(line):
+                add("DHWG-RTL-006", "warn", f, i,
+                    "A physical inset (padding.left/right) is put into EdgeInsetsDirectional. The Duo's system column "
+                    "stays on the physical right in Arabic, so start/end moves the 84 pt gap to the wrong side.",
+                    "Keep MediaQuery insets physical: EdgeInsets.only(left: ..., right: ...), or SafeArea.", source="rtl")
+
+    plist = root / "ios" / "Runner" / "Info.plist"
+    if plist.exists():
+        f = SourceFile(plist, root)
+        for i, line in enumerate(f.lines):
+            if "<key>UIRequiresFullScreen</key>" in line and i + 1 < len(f.lines) and "<true/>" in f.lines[i + 1]:
+                add("DHWG-FL-003", "error", f, i,
+                    "UIRequiresFullScreen is set: iOS scales the app into a portrait window on iPhone Duo and reports "
+                    "no fold, so none of the Duo layout applies.",
+                    "Remove UIRequiresFullScreen (and allow every orientation) unless there is a written reason to keep it.")
+    return out
+
+
 def lint(root: Path) -> Dict[str, List[dict]]:
     files = [SourceFile(p, root) for p in project_files(root, (".swift",))]
-    strings = [SourceFile(p, root) for p in project_files(root, (".strings", ".xcstrings"))]
+    dart = [SourceFile(p, root) for p in project_files(root, (".dart",))
+            if not p.name.endswith((".g.dart", ".freezed.dart"))
+            and p.relative_to(root).parts[0] not in ("test", "integration_test")]
+    strings = [SourceFile(p, root) for p in project_files(root, (".strings", ".xcstrings", ".arb"))]
     has_trait_fix = any(TRAIT_FIX.search(f.text) for f in files)
     uses_swiftui = any(f.imports_swiftui or SWIFTUI_APP.search(f.text) for f in files)
     uikit_regions = any("uikit" in f.region_calls(i) for f in files for i in range(len(f.lines)))
@@ -163,17 +225,19 @@ def lint(root: Path) -> Dict[str, List[dict]]:
                     "and the sidebar or arrangement primary swaps halves in RTL.",
                     "Use min/ideal/max widths and check the Arabic half-open capture."))
 
-    out += face_id_findings(files, strings)
+    out += face_id_findings(files + dart, strings)
+    out += flutter_findings(root, dart)
 
+    every = {s.rel: s for s in files + dart + strings}
     kept, suppressed = [], []
     for item in out:
-        f = next(s for s in files + strings if s.rel == item["file"])
+        f = every.get(item["file"]) or SourceFile(root / item["file"], root)
         reason = f.suppression(item["line"] - 1, item["id"])
         if reason:
             suppressed.append({**item, "suppressed": reason})
         else:
             kept.append(item)
-    return {"findings": kept, "suppressed": suppressed, "files_scanned": len(files)}
+    return {"findings": kept, "suppressed": suppressed, "files_scanned": len(files) + len(dart)}
 
 
 def main() -> int:

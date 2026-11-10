@@ -4,7 +4,7 @@
 
 ## الهدف
 
-Agent skill (لـ Claude Code وأي agent بيدعم Agent Skills) بياخد تطبيق SwiftUI أو UIKit موجود ويجهّزه لـ iPhone Duo. الترتيب كالتالي: skill آبل الرسمي (App Resizability) الأول، بعده الحاجات اللي آبل سايباها، ودعم **RTL والعربي** من الأساس، وفي الآخر **تقرير واحد قبل وبعد**.
+Agent skill (لـ Claude Code وأي agent بيدعم Agent Skills) بياخد تطبيق SwiftUI أو UIKit أو Flutter موجود ويجهّزه لـ iPhone Duo. الترتيب كالتالي: skill آبل الرسمي (App Resizability) الأول، بعده الحاجات اللي آبل سايباها، ودعم **RTL والعربي** من الأساس، وفي الآخر **تقرير واحد قبل وبعد**.
 
 **مش من هدفنا:** Flutter و React Native، والأتمتة على جهاز حقيقي، وإننا نستبدل skill آبل، وإننا نوزّع أي محتوى بتاع آبل.
 
@@ -26,6 +26,7 @@ duo-here-we-go/
     apple-bridge.md           # تصدير skill آبل وتشغيله وتحويل نتايجه
     duo-apis.md               # ملخص APIs متراجع على SDK 27.1، وملاحظات Catalyst والـ runtime بتاع 27.2
     rtl.md                    # نتايج تجربة RTL + قايمة الفحص
+    flutter.md                # قواعد Flutter وقايمة مراجعة لقطاته، والتوصيل بـ duo-adapt
     decisions.md              # (لاحقاً، مع المرحلة 5) إزاي نسجّل قرارات إعادة التصميم
   scripts/
     dhwg_common.py            # simctl، والبحث عن محاكي Duo، وتشغيل hinge
@@ -42,7 +43,7 @@ duo-here-we-go/
 
 | # | المرحلة | بتعمل إيه | v0.1 |
 |---|---|---|---|
-| 0 | Preflight | تتأكد من الأدوات، ونوع المشروع (UIKit أو SwiftUI أو الاتنين)، وحالة git | ✓ (أقل نسخة) |
+| 0 | Preflight | تتأكد من الأدوات، ونوع المشروع (UIKit أو SwiftUI أو الاتنين أو Flutter)، وحالة git | ✓ (أقل نسخة) |
 | 1 | Baseline | تبني التطبيق وتصوّره قبل أي تعديل: مقفول ومفتوح ونص طيّة × إنجليزي وعربي | ✓ |
 | 2 | Apple pass | تشغّل skill آبل وتحوّل نتايجه لـ `findings.json` | ✓ (يدوي في الأول) |
 | 3 | Duo lint | الشريط، والمناطق المحجوزة، والـ arrangements، والـ scenes، والكاميرا | لاحقاً |

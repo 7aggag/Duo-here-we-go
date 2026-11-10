@@ -8,7 +8,7 @@
 
 # Duo Here We Go
 
-**Ready your SwiftUI or UIKit app for iPhone Duo, in English and Arabic.**
+**Ready your SwiftUI, UIKit or Flutter app for iPhone Duo, in English and Arabic.**
 
 <p dir="rtl"><b>جهّز تطبيقك لـ iPhone Duo بالعربي والإنجليزي.</b></p>
 
@@ -77,11 +77,20 @@ flowchart LR
 |---|---|---|
 | `DHWG-001` | warn | A split-view sidebar capped at or below 475 pt, so half-open the detail runs across the fold |
 | `DHWG-002` | warn | User-facing text that names Face ID; iPhone Duo has Touch ID only |
+| `DHWG-FL-001` | warn | Flutter fold logic on `displayFeatures`, which is always empty on iOS without a bridge package |
+| `DHWG-FL-002` | warn | A portrait-only orientation lock in a Flutter app |
+| `DHWG-FL-003` | error | `UIRequiresFullScreen` in a Flutter app's `Info.plist`, so iOS scales it into a portrait window |
+| `DHWG-FL-004` | warn | A dropped right safe-area inset, so content runs under the 84 pt system column |
+| `DHWG-RTL-006` | warn | A physical inset in `EdgeInsetsDirectional`, which moves the column's gap to the left in Arabic |
 | `DHWG-RTL-001` | error | In-app RTL through the appearance proxy without `traitOverrides.layoutDirection` |
 | `DHWG-RTL-002` | warn | UIKit (physical) and SwiftUI (mirrored) reserved-region frames mixed in one project |
 | `DHWG-RTL-003` | warn | The vertical bar edge mapped to `left`/`right` instead of leading/trailing |
 | `DHWG-RTL-004` | info | Fixed sidebar or arrangement widths that swap halves in Arabic |
 | `DHWG-RTL-005` | warn | The appearance-proxy switch in a project with SwiftUI views, which ignore it |
+
+### Flutter
+
+Flutter draws its own bars and gets no fold on iOS, so it has its own rules and review checklist in [`references/flutter.md`](skills/duo-here-we-go/references/flutter.md). The skill builds with `flutter build ios --simulator`, captures and reports the same way, and keeps Arabic first. For the layout work itself (side-column navigation, list/detail, the fold layer) it points you to [duo-adapt](https://github.com/islam-diab/duo-adapt), which you install separately. Measured with Flutter 3.47.9 on the simulator: the column arrives as an 84 pt right inset in every pose and language, `displayFeatures` stays empty half-open so dialogs cross the hinge, and in Arabic a list's titles slide under the clock (`research/flutter-probe`).
 
 Plus visual findings from the captures, and Apple's own findings, in the same report. Suppress a finding in code with a reason: `// dhwg:disable-next-line DHWG-RTL-001 -- why`.
 
@@ -125,6 +134,7 @@ Or in Arabic: *جهّز التطبيق ده عشان يشتغل كويس على 
 ## Requirements
 
 - macOS with Xcode 27.1 or later. The skill creates the iPhone Duo simulator, and downloads its runtime (~8 GB) only after asking you. From Xcode 27.2 the Duo has its own runtime, separate from the other iPhones'; the skill picks the right one.
+- For Flutter apps: Flutter 3.41 or later.
 - Python 3.9 or later (the one that ships with Xcode's command line tools works).
 - An agent that can run terminal commands. The visual review needs a model that reads images.
 - A git repository, so every change is reviewable.
@@ -134,7 +144,7 @@ Or in Arabic: *جهّز التطبيق ده عشان يشتغل كويس على 
 - **Reads** your sources, `Info.plist` and build settings, and `git status`.
 - **Changes** your code only after you say yes at a checkpoint, and leaves every change uncommitted for you to review. It never commits or pushes.
 - **Writes** its captures, findings and report to `dhwg-out/`, which it adds to your repo's local `.git/info/exclude`.
-- **Runs** `xcodebuild`, `xcrun simctl`, `xcrun agent skills export` (Apple's skill, into a temp folder), its own Python scripts, and the bundled `hinge` helper, which runs inside the simulator only.
+- **Runs** `xcodebuild` (or `flutter build ios` for Flutter apps), `xcrun simctl`, `xcrun agent skills export` (Apple's skill, into a temp folder), its own Python scripts, and the bundled `hinge` helper, which runs inside the simulator only.
 - **Network:** only Apple's simulator runtime download, and only if it is missing and you agree.
 - **Data:** it collects nothing and sends nothing anywhere.
 
@@ -143,11 +153,12 @@ Or in Arabic: *جهّز التطبيق ده عشان يشتغل كويس على 
 ```text
 skills/duo-here-we-go/
   SKILL.md               the eight steps the agent follows
-  references/            Apple bridge, RTL rules, iPhone Duo layout rules, API cheat sheet
+  references/            Apple bridge, RTL rules, iPhone Duo layout rules, Flutter rules, API cheat sheet
   scripts/               preflight, simulator setup, capture, lint, report (Python, standard library)
   vendor/hinge/          the hinge CLI that drives the simulator's fold
 .claude-plugin/          Claude Code plugin and marketplace manifests
 research/rtl-probe/      the probe apps and captures behind the RTL rules
+research/flutter-probe/  the Flutter probe and captures behind the Flutter rules
 docs/                    architecture, research, banner source
 tests/                   python3 -m unittest discover -s tests
 ```
@@ -160,6 +171,7 @@ Built in November 2026, right after iPhone Duo shipped, and already run on three
 
 - [`hinge`](https://github.com/artemnovichkov/hinge) by Artem Novichkov (MIT) drives the simulator's fold.
 - Apple's `app-resizability` skill runs from your own Xcode; it is not included here.
+- [duo-adapt](https://github.com/islam-diab/duo-adapt) (MIT) and Bilal Aksoy's write-up pointed at the Flutter behaviour that `research/flutter-probe` then measured; the fold status is tracked in flutter/flutter#192515.
 - The in-app language bug was first reported on the Apple Developer Forums, thread 852870.
 
 ## License

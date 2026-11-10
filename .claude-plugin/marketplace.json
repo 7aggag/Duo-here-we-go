@@ -1,6 +1,6 @@
 {
   "name": "duo-here-we-go",
-  "description": "Ready an iOS app for iPhone Duo, with Arabic and right-to-left support",
+  "description": "Ready an iOS or Flutter app for iPhone Duo, with Arabic and right-to-left support",
   "owner": {
     "name": "Haggag",
     "url": "https://github.com/7aggag"
@@ -9,7 +9,7 @@
     {
       "name": "duo-here-we-go",
       "source": "./",
-      "description": "Ready an iOS app for iPhone Duo: Apple's resizability skill first, then Arabic/RTL, pose captures and one readiness report",
+      "description": "Ready an iOS or Flutter app for iPhone Duo: Apple's resizability skill first, then Arabic/RTL, pose captures and one readiness report",
       "version": "0.1.0"
     }
   ]

@@ -1,6 +1,6 @@
 ---
 name: duo-here-we-go
-description: Readies an existing SwiftUI or UIKit app for iPhone Duo, Apple's foldable. Runs Apple's app-resizability skill first, then checks Arabic and right-to-left layout around the vertical bar and the hinge, captures every pose on the Duo simulator, and writes one before/after readiness report. Use when asked to prepare or optimize an iOS app for iPhone Duo or the foldable iPhone, to check Arabic or RTL on iPhone Duo, or for a Duo readiness report or pose screenshots.
+description: Readies an existing SwiftUI, UIKit or Flutter app for iPhone Duo, Apple's foldable. Runs Apple's app-resizability skill first, then checks Arabic and right-to-left layout around the vertical bar and the hinge, captures every pose on the Duo simulator, and writes one before/after readiness report. Use when asked to prepare or optimize an iOS or Flutter app for iPhone Duo or the foldable iPhone, to check Arabic or RTL on iPhone Duo, or for a Duo readiness report or pose screenshots.
 ---
 
 # Duo Here We Go
@@ -8,6 +8,8 @@ description: Readies an existing SwiftUI or UIKit app for iPhone Duo, Apple's fo
 Scripts are in `scripts/` (Python 3.9+, standard library). Run them with `python3 <skill-dir>/scripts/<name>`. Everything they write goes to `<project>/dhwg-out/`, a scratch folder that stays out of commits.
 
 ## Ground rules
+
+- **Flutter.** When preflight reports `kind: flutter`, read `references/flutter.md` first: it replaces the UIKit and SwiftUI parts of steps 2, 4 and 5, and the same steps, checkpoints and report apply otherwise.
 
 - **Apple first.** Apple's `app-resizability` skill does the resizability migration. This skill covers what it leaves: the vertical bar, the hinge, Arabic and RTL, captures and the report. When the two disagree, follow Apple and record the difference in the report.
 - **Evidence.** Every claim that something works points at a capture or a finding, and every finding carries `verified`: `static`, `simulator`, `device` or `unverified`. A pose you did not capture is reported as not captured.
@@ -35,7 +37,9 @@ xcodebuild -scheme <Scheme> -destination 'platform=iOS Simulator,id=<duo udid fr
   -derivedDataPath <project>/dhwg-out/DerivedData build
 ```
 
-Done when the `.app` exists under `dhwg-out/DerivedData/Build/Products/` and `xcrun vtool -show-build <App>.app/<executable>` reports `sdk 27.1` or later. An older SDK keeps the bars horizontal, so the captures would not show the Duo layout.
+For Flutter, build with `flutter build ios --simulator --debug` instead (flavors and defines in `references/flutter.md`); the app is under `build/ios/iphonesimulator/`.
+
+Done when the `.app` exists under `dhwg-out/DerivedData/Build/Products/` (or `build/ios/iphonesimulator/` for Flutter) and `xcrun vtool -show-build <App>.app/<executable>` reports `sdk 27.1` or later. An older SDK keeps the bars horizontal, so the captures would not show the Duo layout.
 
 ### 3. Baseline captures
 
@@ -58,7 +62,7 @@ It captures closed, open (180°) and half-open (90°) poses, in English and Arab
 
 ### 4. Apple pass
 
-Follow `references/apple-bridge.md`. Done when every file Apple's skill flags has a diff or a stated reason to skip, and `dhwg-out/findings-apple.json` exists.
+Follow `references/apple-bridge.md`. For Flutter, run it on `ios/Runner` only (UIScene, orientations, `Info.plist`): Apple's skill does not read Dart, and the layout work belongs to duo-adapt (see `references/flutter.md`), which the user installs and runs separately if they want it. Done when every file Apple's skill flags has a diff or a stated reason to skip, and `dhwg-out/findings-apple.json` exists.
 
 ### 5. Lint and visual review
 
@@ -66,7 +70,7 @@ Follow `references/apple-bridge.md`. Done when every file Apple's skill flags ha
 python3 scripts/dhwg_lint.py <project> --out <project>/dhwg-out/findings-lint.json --fail-on never
 ```
 
-For each finding, read its rule (`DHWG-RTL-*` in `references/rtl.md`, `DHWG-0xx` in `references/duo-layout.md`; `DHWG-002` is about Touch ID copy, not layout), open the code, and mark it confirmed or a false positive. A false positive is suppressed in code with a reason, after the user agrees. Then review every shot with the checklists in both references: each Arabic shot against its English twin, and each half-open shot against the hinge band. Record each visual problem in `dhwg-out/findings-visual.json` (a list; `id` is `DHWG-RTL-VIS` with `source: "rtl"` for a right-to-left problem, `DHWG-VIS` with `source: "dhwg"` otherwise; `severity`; `verified: "simulator"`; `evidence`: the shot path). When you can tie it to code, add `file` and `line`.
+For each finding, read its rule (`DHWG-RTL-*` in `references/rtl.md`, `DHWG-0xx` in `references/duo-layout.md`, `DHWG-FL-*` and `DHWG-RTL-006` in `references/flutter.md`; `DHWG-002` is about Touch ID copy, not layout), open the code, and mark it confirmed or a false positive. A false positive is suppressed in code with a reason, after the user agrees. Then review every shot with the checklists in both references (for Flutter, the one in `references/flutter.md`): each Arabic shot against its English twin, and each half-open shot against the hinge band. Record each visual problem in `dhwg-out/findings-visual.json` (a list; `id` is `DHWG-RTL-VIS` with `source: "rtl"` for a right-to-left problem, `DHWG-VIS` with `source: "dhwg"` otherwise; `severity`; `verified: "simulator"`; `evidence`: the shot path). When you can tie it to code, add `file` and `line`.
 
 Two checks keep the findings honest:
 

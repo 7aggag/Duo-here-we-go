@@ -1,7 +1,7 @@
 {
   "name": "duo-here-we-go",
   "version": "0.1.0",
-  "description": "Ready an iOS app for iPhone Duo: Apple's resizability skill first, then Arabic/RTL, pose captures and one readiness report",
+  "description": "Ready an iOS or Flutter app for iPhone Duo: Apple's resizability skill first, then Arabic/RTL, pose captures and one readiness report",
   "author": {
     "name": "Haggag",
     "url": "https://github.com/7aggag"
@@ -14,7 +14,8 @@
     "rtl",
     "arabic",
     "swiftui",
-    "uikit"
+    "uikit",
+    "flutter"
   ],
   "homepage": "https://github.com/7aggag/Duo-here-we-go",
   "repository": "https://github.com/7aggag/Duo-here-we-go"

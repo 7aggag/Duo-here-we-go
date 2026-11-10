@@ -16,7 +16,7 @@ LANG_ARGS = {
 }
 
 
-EXCLUDED_DIRS = {".git", "Pods", "Carthage", ".build", "DerivedData", "build", "SourcePackages", "node_modules", "dhwg-out"}
+EXCLUDED_DIRS = {".git", "Pods", "Carthage", ".build", "DerivedData", "build", "SourcePackages", "node_modules", "dhwg-out", ".dart_tool", ".symlinks", "ephemeral"}
 
 
 def project_files(root: Path, suffixes: tuple) -> List[Path]:

@@ -25,8 +25,11 @@ from dhwg_common import (LANG_ARGS, POSE_ANGLES, ensure_booted, find_duo, hinge,
 def bundle_info(app: Path) -> dict:
     with open(app / "Info.plist", "rb") as f:
         info = plistlib.load(f)
-    arabic = (app / "ar.lproj").is_dir() or "ar" in info.get("CFBundleLocalizations", [])
-    return {"bundle_id": info["CFBundleIdentifier"], "arabic_in_bundle": arabic}
+    flutter = (app / "Frameworks" / "App.framework" / "flutter_assets").is_dir()
+    # Flutter compiles its translations into Dart code and reads the system languages directly,
+    # so the bundle says nothing about Arabic; the Arabic shots themselves show it.
+    arabic = None if flutter else (app / "ar.lproj").is_dir() or "ar" in info.get("CFBundleLocalizations", [])
+    return {"bundle_id": info["CFBundleIdentifier"], "arabic_in_bundle": arabic, "flutter": flutter}
 
 
 def posture(udid: str) -> dict:
@@ -188,7 +191,7 @@ def main() -> int:
         manifest["warnings"].append(f"The simulator still returned black screenshots {args.display_timeout:g}s "
                                     "after boot; shots may be black.")
     probe.unlink(missing_ok=True)
-    if "ar" in langs and not info["arabic_in_bundle"]:
+    if "ar" in langs and info["arabic_in_bundle"] is False:
         manifest["warnings"].append("App bundle has no Arabic localization; 'ar' shots render left-to-right.")
 
     moving = []

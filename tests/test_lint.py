@@ -286,5 +286,66 @@ class FaceIDCopy(unittest.TestCase):
         self.assertEqual(len(r["suppressed"]), 1)
 
 
+PUBSPEC = """
+    name: app
+    dependencies:
+      flutter:
+        sdk: flutter
+"""
+
+
+class Flutter(unittest.TestCase):
+    def test_display_features_without_a_bridge_warns(self):
+        dart = "final f = MediaQuery.displayFeaturesOf(context);\n"
+        r = lint(project({"pubspec.yaml": PUBSPEC, "lib/fold.dart": dart}))
+        self.assertEqual(ids(r), ["DHWG-FL-001"])
+        bridged = PUBSPEC + "      foldable: 1.0.5\n"
+        self.assertEqual(ids(lint(project({"pubspec.yaml": bridged, "lib/fold.dart": dart}))), [])
+
+    def test_tests_are_not_linted(self):
+        dart = "final f = MediaQuery.of(context).displayFeatures;\n"
+        self.assertEqual(ids(lint(project({"pubspec.yaml": PUBSPEC, "test/fold_test.dart": dart}))), [])
+
+    def test_portrait_lock_warns_but_all_orientations_do_not(self):
+        lock = "SystemChrome.setPreferredOrientations([\n  DeviceOrientation.portraitUp,\n]);\n"
+        free = "SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp, DeviceOrientation.landscapeLeft]);\n"
+        self.assertEqual(ids(lint(project({"lib/main.dart": lock}))), ["DHWG-FL-002"])
+        self.assertEqual(ids(lint(project({"lib/main.dart": free}))), [])
+
+    def test_requires_full_screen_is_error(self):
+        plist = "<dict>\n<key>UIRequiresFullScreen</key>\n<true/>\n</dict>\n"
+        r = lint(project({"pubspec.yaml": PUBSPEC, "ios/Runner/Info.plist": plist}))
+        self.assertEqual([(f["id"], f["severity"], f["line"]) for f in r["findings"]], [("DHWG-FL-003", "error", 2)])
+
+    def test_dropping_the_right_inset_warns(self):
+        r = lint(project({"lib/a.dart": "SafeArea(left: true, right: false, child: list)\n",
+                          "lib/b.dart": "MediaQuery.removePadding(context: c, removeRight: true, child: x)\n"}))
+        self.assertEqual(ids(r), ["DHWG-FL-004", "DHWG-FL-004"])
+
+    def test_physical_inset_in_directional_padding_is_rtl_warning(self):
+        bad = "padding: EdgeInsetsDirectional.only(end: MediaQuery.of(context).viewPadding.right),\n"
+        good = "padding: EdgeInsets.only(right: MediaQuery.of(context).viewPadding.right),\n"
+        r = lint(project({"lib/a.dart": bad, "lib/b.dart": good}))
+        self.assertEqual([(f["id"], f["source"], f["file"]) for f in r["findings"]],
+                         [("DHWG-RTL-006", "rtl", "lib/a.dart")])
+
+    def test_face_id_in_arb_and_dart(self):
+        r = lint(project({"lib/l10n/app_en.arb": '{\n  "unlock": "Unlock with Face ID"\n}\n',
+                          "lib/login.dart": "Text('Use Face ID')\n"}))
+        self.assertEqual(ids(r), ["DHWG-002", "DHWG-002"])
+        adapts = "final types = await auth.getAvailableBiometrics();\n"
+        r = lint(project({"lib/l10n/app_en.arb": '{\n  "unlock": "Unlock with Face ID"\n}\n', "lib/auth.dart": adapts}))
+        self.assertEqual([f["severity"] for f in r["findings"]], ["info"])
+
+    def test_face_id_in_a_dart_comment_is_ignored(self):
+        self.assertEqual(ids(lint(project({"lib/a.dart": "// 'Face ID' wording lives in l10n\n"}))), [])
+
+    def test_suppressed_in_dart(self):
+        dart = "// dhwg:disable-next-line DHWG-FL-004 -- full-bleed video only\nSafeArea(right: false, child: v)\n"
+        r = lint(project({"lib/a.dart": dart}))
+        self.assertEqual(ids(r), [])
+        self.assertEqual(len(r["suppressed"]), 1)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -9,6 +9,7 @@ exit 0 = ready, 2 = blocking problems (listed in "problems").
 import argparse
 import json
 import re
+import shutil
 import sys
 from pathlib import Path
 
@@ -47,6 +48,40 @@ def git_state(root: Path) -> dict:
     return {"repo": True, "clean": status.strip() == "", "branch": branch}
 
 
+# Flutter 3.41 is the first release whose tooling migrates an unmodified AppDelegate to UIScene,
+# which an app built with the iOS 27 SDK needs to launch.
+FLUTTER_MIN = (3, 41)
+FLUTTER_ARB_AR = re.compile(r"(?:^|[_-])ar(?:[_-][A-Za-z]+)?\.arb$")
+
+
+def is_flutter(root: Path) -> bool:
+    pubspec = root / "pubspec.yaml"
+    return pubspec.exists() and re.search(r"^\s*sdk\s*:\s*flutter\b", pubspec.read_text(errors="ignore"), re.M) is not None
+
+
+def flutter_version() -> str:
+    if not shutil.which("flutter"):
+        return ""
+    out = run(["flutter", "--version", "--machine"], check=False, timeout=300).stdout
+    try:
+        return json.loads(out[out.index("{"):]).get("frameworkVersion", "")
+    except ValueError:
+        return ""
+
+
+def flutter_shape(root: Path) -> dict:
+    dart = project_files(root, (".dart",))
+    arabic_l10n = any(FLUTTER_ARB_AR.search(p.name) for p in project_files(root, (".arb",))) or any(
+        re.search(r"Locale\s*\(\s*['\"]ar['\"]", p.read_text(errors="ignore")) for p in dart)
+    plist = root / "ios" / "Runner" / "Info.plist"
+    text = plist.read_text(errors="ignore") if plist.exists() else ""
+    plist_ar = re.search(r"CFBundleLocalizations</key>\s*<array>(?:(?!</array>).)*<string>ar</string>", text, re.S) is not None
+    pubspec = (root / "pubspec.yaml").read_text(errors="ignore")
+    bridge = [p for p in ("foldable", "duo_kit", "iphone_duo_ui_pro") if re.search(rf"^\s+{p}\s*:", pubspec, re.M)]
+    return {"dart_files": len(dart), "arabic_l10n": arabic_l10n, "ios_plist_lists_ar": plist_ar,
+            "ios_runner": (root / "ios" / "Runner.xcodeproj").exists(), "fold_bridge": bridge}
+
+
 def project_shape(root: Path) -> dict:
     containers = sorted(str(p.relative_to(root)) for p in root.rglob("*")
                         if p.suffix in (".xcodeproj", ".xcworkspace") and "Pods" not in p.parts
@@ -77,8 +112,13 @@ def project_shape(root: Path) -> dict:
         if re.search(r'"ar"\s*:', p.read_text(errors="ignore")):
             arabic = True
 
-    return {"containers": containers, "swift_files": len(swift), "swiftui_files": swiftui,
-            "uikit_files": uikit, "kind": kind, "scene_manifest": scene, "arabic_localization": arabic}
+    shape = {"containers": containers, "swift_files": len(swift), "swiftui_files": swiftui,
+             "uikit_files": uikit, "kind": kind, "scene_manifest": scene, "arabic_localization": arabic}
+    if is_flutter(root):
+        shape["flutter"] = flutter_shape(root)
+        shape["native_kind"], shape["kind"] = kind, "flutter"
+        shape["arabic_localization"] = shape["flutter"]["arabic_l10n"]
+    return shape
 
 
 def main() -> int:
@@ -104,6 +144,22 @@ def main() -> int:
         problems.append("Working tree has uncommitted changes. Commit or stash them before any phase edits code.")
 
     shape = project_shape(root)
+    flutter = shape.get("flutter")
+    if flutter:
+        fv = flutter_version()
+        shape["flutter"]["version"] = fv
+        if not fv:
+            problems.append("This is a Flutter project but the flutter command was not found; install Flutter "
+                            f"{'.'.join(map(str, FLUTTER_MIN))} or later, or add it to PATH.")
+        elif not version_at_least(fv.split("-")[0], FLUTTER_MIN):
+            problems.append(f"Flutter {'.'.join(map(str, FLUTTER_MIN))} or later is required for the UIScene "
+                            f"migration the iOS 27 SDK needs (found {fv}).")
+        if not flutter["ios_runner"]:
+            problems.append("Flutter project has no ios/Runner.xcodeproj; run `flutter create --platforms=ios .` first.")
+        if flutter["arabic_l10n"] and not flutter["ios_plist_lists_ar"]:
+            warnings.append("The app has Arabic Flutter localizations, but ios/Runner/Info.plist does not list 'ar' "
+                            "in CFBundleLocalizations; Flutter's docs ask for it, and without it iOS does not offer "
+                            "Arabic for the app in Settings or the App Store.")
     if not shape["containers"]:
         problems.append("No .xcodeproj, .xcworkspace or Package.swift found.")
     if not shape["scene_manifest"]:
