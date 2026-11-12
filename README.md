@@ -18,6 +18,7 @@
 [![Agent Skills](https://img.shields.io/badge/Agent_Skills-SKILL.md-f2b134?style=flat-square)](#install)
 [![Agents](https://img.shields.io/badge/agents-Claude_Code_·_Codex_·_Cursor_·_OpenCode-14201a?style=flat-square)](#install)
 [![RTL](https://img.shields.io/badge/RTL-Arabic_first-c98a0c?style=flat-square)](#why-iphone-duo-needs-its-own-pass)
+[![Mentioned in Awesome SwiftUI](https://img.shields.io/badge/mentioned_in-Awesome_SwiftUI-fc60a8?style=flat-square&logo=awesomelists&logoColor=white)](https://github.com/onmyway133/awesome-swiftui)
 
 </div>
 
